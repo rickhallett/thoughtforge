@@ -1,4 +1,4 @@
-import { RawContent, ProcessedContent } from '../types/content';
+import { RawContent, ProcessedContent, isValidSource } from '../types/content';
 
 export class ContentProcessor {
   processContent(raw: RawContent): ProcessedContent {
@@ -13,16 +13,15 @@ export class ContentProcessor {
   }
 
   validateContent(raw: RawContent): boolean {
-    if (!raw.title) {
-      throw new Error('Title is required');
-    }
     if (!raw.body) {
       throw new Error('Body is required');
     }
     if (!raw.source) {
       throw new Error('Source is required');
     }
-    
+    if (!isValidSource(raw.source)) {
+      throw new Error('Invalid source');
+    }
     return true;
   }
 

@@ -9,9 +9,14 @@ router.post('/submit', async (req: Request, res: Response): Promise<void> => {
   try {
     const rawContent: RawContent = req.body;
     
-    // Validate input
-    if (!rawContent.body) {
-      res.status(400).json({ error: 'Content body is required' });
+    try {
+      processor.validateContent(rawContent);
+    } catch (error) {
+      res.status(400).json({
+        error: 'Invalid request',
+        details: (error as Error).message
+      });
+      return;
     }
     
     // Process content
