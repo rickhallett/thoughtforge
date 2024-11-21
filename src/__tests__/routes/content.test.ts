@@ -60,7 +60,7 @@ describe('Content Routes', () => {
       const response = await request(app)
         .post('/content/submit?source=markdown')
         .send({
-          body: '# Test content',
+          body: '# Test content\n## Original Points\n## Conclusion',
           source: ContentSource.MARKDOWN
         });
 
@@ -68,10 +68,22 @@ describe('Content Routes', () => {
       expect(response.body).toMatchObject({
         message: 'Content processed successfully',
         content: {
-          body: '# Test content',
+          body: '# Test content\n## Original Points\n## Conclusion',
           source: ContentSource.MARKDOWN,
           status: 'processed'
         }
+      });
+    });
+
+    it('should return 400 when markdown format is invalid', async () => {
+      const response = await request(app)
+        .post('/content/submit?source=markdown')
+        .send({ body: 'Invalid markdown format', source: ContentSource.MARKDOWN });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({
+        error: 'Invalid request',
+        details: 'Invalid markdown format. Expected: # Title, ## Original Points, ## Conclusion'
       });
     });
   });

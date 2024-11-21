@@ -38,4 +38,25 @@ export class MarkdownProcessor extends ContentProcessor {
   processContent(raw: RawContent): ProcessedContent {
     return super.processContent(raw);
   }
+
+  validateContent(raw: RawContent): boolean {
+    super.validateContent(raw);
+    
+    if (!this.isValidMarkdownFormat(raw.body)) {
+      throw new Error('Invalid markdown format. Expected: # Title, ## Original Points, ## Conclusion');
+    }
+
+    return true;
+  }
+
+  private isValidMarkdownFormat(markdown: string): boolean {
+    const sections = markdown.split('\n').map(line => line.trim());
+    
+    // Check for required headers
+    const hasTitle = sections.some(line => /^# .+/.test(line));
+    const hasOriginalPoints = sections.some(line => /^## Original Points/.test(line));
+    const hasConclusion = sections.some(line => /^## Conclusion/.test(line));
+
+    return hasTitle && hasOriginalPoints && hasConclusion;
+  }
 }

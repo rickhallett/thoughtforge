@@ -7,12 +7,7 @@ const router = express.Router();
 
 router.post('/submit', async (req: Request, res: Response): Promise<void> => {
 
-  let processor: ContentProcessor;
-  if (req.query.source === 'markdown') {
-    processor = new MarkdownProcessor();
-  } else {
-    processor = new ContentProcessor();
-  }
+  const processor: ContentProcessor = getProcessor(req);
 
   try {
     const rawContent: RawContent = req.body;
@@ -27,7 +22,6 @@ router.post('/submit', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // Process content
     const processed = processor.processContent(rawContent);
     
     res.json({
@@ -43,3 +37,13 @@ router.post('/submit', async (req: Request, res: Response): Promise<void> => {
 }) as RequestHandler;
 
 export default router;
+
+function getProcessor(req: Request): ContentProcessor {
+  let processor: ContentProcessor;
+  if (req.query.source === 'markdown') {
+    processor = new MarkdownProcessor();
+  } else {
+    processor = new ContentProcessor();
+  }
+  return processor;
+}

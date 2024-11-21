@@ -49,7 +49,6 @@ describe('ContentProcessor', () => {
   });
 
   describe('standardizeBody', () => {
-    // We need to make standardizeBody public or create a new public method for testing
     it('should standardize Windows line endings', () => {
       const raw: RawContent = {
         body: 'Line 1\r\nLine 2\r\nLine 3',
