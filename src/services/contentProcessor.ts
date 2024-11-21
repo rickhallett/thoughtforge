@@ -33,3 +33,9 @@ export class ContentProcessor {
       .replace(/\n{3,}/g, '\n\n');
   }
 }
+
+export class MarkdownProcessor extends ContentProcessor {
+  processContent(raw: RawContent): ProcessedContent {
+    return super.processContent(raw);
+  }
+}

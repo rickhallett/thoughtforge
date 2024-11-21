@@ -1,11 +1,19 @@
 import express, { Request, Response, RequestHandler } from 'express';
-import { ContentProcessor } from '../services/contentProcessor';
+import { ContentProcessor, MarkdownProcessor } from '../services/contentProcessor';
 import { RawContent } from '../types/content';
 
 const router = express.Router();
-const processor = new ContentProcessor();
+
 
 router.post('/submit', async (req: Request, res: Response): Promise<void> => {
+
+  let processor: ContentProcessor;
+  if (req.query.source === 'markdown') {
+    processor = new MarkdownProcessor();
+  } else {
+    processor = new ContentProcessor();
+  }
+
   try {
     const rawContent: RawContent = req.body;
     
