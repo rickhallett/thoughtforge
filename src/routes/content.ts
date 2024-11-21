@@ -1,5 +1,5 @@
 import express, { Request, Response, RequestHandler } from 'express';
-import { ContentProcessor, MarkdownProcessor } from '../services/contentProcessor';
+import { ContentProcessor, MarkdownProcessor } from '../services/ContentProcessor';
 import { RawContent } from '../types/content';
 
 const router = express.Router();

@@ -1,4 +1,4 @@
-import { ContentProcessor } from '../../services/contentProcessor';
+import { ContentProcessor } from '../../services/ContentProcessor';
 import { RawContent, ContentSource } from '../../types/content';
 
 describe('ContentProcessor', () => {
