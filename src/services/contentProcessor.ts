@@ -8,6 +8,7 @@ export class ContentProcessor {
       body: this.standardizeBody(raw.body),
       source: raw.source,
       createdAt: new Date(),
+      updatedAt: new Date(),
       status: 'processed'
     };
   }

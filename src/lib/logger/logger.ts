@@ -3,10 +3,10 @@ import { LogContext, LogLevel } from './types';
 
 class Logger {
     private logger: winston.Logger;
-    
+
     constructor() {
         const logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
-        
+
         this.logger = createLogger({
             level: logLevel,
             format: format.combine(
@@ -21,22 +21,22 @@ class Logger {
                     format: format.combine(
                         format.colorize(),
                         format.printf(({ timestamp, level, message, ...meta }) => {
-                            const context = meta.context ? 
+                            const context = meta.context ?
                                 `\n${JSON.stringify(meta.context, null, 2)}` : '';
                             return `${timestamp} [${level}]: ${message}${context}`;
                         })
                     )
                 }),
-                
+
                 // File transport for production
-                new transports.File({ 
-                    filename: 'error.log', 
+                new transports.File({
+                    filename: 'error.log',
                     level: 'error',
-                    dirname: 'logs' 
+                    dirname: 'logs'
                 }),
-                new transports.File({ 
+                new transports.File({
                     filename: 'combined.log',
-                    dirname: 'logs' 
+                    dirname: 'logs'
                 })
             ]
         });
@@ -45,7 +45,7 @@ class Logger {
         this.logger.exceptions.handle(
             new transports.File({ filename: 'logs/exceptions.log' })
         );
-        
+
         if (process.env.NODE_ENV !== 'production') {
             this.logger.add(new transports.Console({
                 format: format.simple()
@@ -77,13 +77,13 @@ class Logger {
     child(defaultContext: LogContext) {
         const childLogger = this.logger.child(defaultContext);
         return {
-            error: (message: string, context?: LogContext) => 
+            error: (message: string, context?: LogContext) =>
                 childLogger.error(message, { context }),
-            warn: (message: string, context?: LogContext) => 
+            warn: (message: string, context?: LogContext) =>
                 childLogger.warn(message, { context }),
-            info: (message: string, context?: LogContext) => 
+            info: (message: string, context?: LogContext) =>
                 childLogger.info(message, { context }),
-            debug: (message: string, context?: LogContext) => 
+            debug: (message: string, context?: LogContext) =>
                 childLogger.debug(message, { context })
         };
     }

@@ -1,5 +1,7 @@
 import { QueueManager } from "../../lib/queue/QueueManager";
 
+jest.mock('../../lib/logger/Logger');
+
 describe('QueueManager', () => {
     let queueManager: QueueManager;
 
@@ -16,7 +18,7 @@ describe('QueueManager', () => {
 
     it('should connect to Redis successfully', async () => {
         const queue = queueManager.getQueue('content-input');
-        
+
         // Test connection by pinging Redis
         const client = await queue.client;
         const ping = await client.ping();
@@ -32,7 +34,7 @@ describe('QueueManager', () => {
         });
 
         const queue = invalidQueueManager.getQueue('content-input');
-        
+
         // Try to perform an operation that requires Redis connection
         await expect(async () => {
             await queue.add({ test: true });
@@ -41,7 +43,7 @@ describe('QueueManager', () => {
 
     it('should be able to add and process jobs', async () => {
         const queue = queueManager.getQueue('content-input');
-        
+
         // Add a test processor
         queue.process(async (job) => {
             return { processed: true, data: job.data };
@@ -49,10 +51,10 @@ describe('QueueManager', () => {
 
         // Add a job
         const job = await queue.add({ test: true });
-        
+
         // Wait for job completion
         const result = await job.finished();
-        
+
         expect(result).toEqual({
             processed: true,
             data: { test: true }
