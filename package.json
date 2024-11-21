@@ -1,0 +1,26 @@
+{
+  "name": "thoughtforge",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.9.1",
+    "eslint": "^9.15.0",
+    "globals": "^15.12.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.15.0"
+  },
+  "dependencies": {
+    "@types/bull": "^3.15.9",
+    "@types/express": "^5.0.0",
+    "bull": "^4.16.4",
+    "express": "^4.21.1",
+    "node-cache": "^5.1.2",
+    "winston": "^3.17.0"
+  }
+}
