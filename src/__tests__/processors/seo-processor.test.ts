@@ -1,5 +1,5 @@
 // src/tests/processors/seo-processor.test.ts
-import { SEOProcessor } from '../../processors/SeoProcessor';
+import { SEOProcessor } from '../../processors/seo-processor';
 import { ProcessedContent, ContentSource } from '../../types/content';
 
 jest.mock('../../lib/logger/Logger');

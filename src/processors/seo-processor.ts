@@ -1,5 +1,5 @@
 // src/processors/seo-processor.ts
-import { logger } from '../lib/logger/Logger';
+import { logger } from '../lib/logger/logger';
 import { ProcessedContent } from '../types/content';
 
 export interface SEOOptions {

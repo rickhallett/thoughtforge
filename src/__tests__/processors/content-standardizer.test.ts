@@ -1,4 +1,4 @@
-import { ContentStandardizer } from '../../processors/ContentStandardizer';
+import { ContentStandardizer } from '../../processors/content-standardizer';
 import { ContentInputJob } from '../../lib/queue/types';
 import { ContentSource } from '../../types/content';
 

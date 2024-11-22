@@ -1,5 +1,5 @@
 // src/processors/ai-enhancement.ts
-import { logger } from '../lib/logger/Logger';
+import { logger } from '../lib/logger/logger';
 import { ProcessedContent } from '../types/content';
 // import { LangChain } from 'langchain'; // Note: You'll need to add proper LangChain imports
 

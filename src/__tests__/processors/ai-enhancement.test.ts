@@ -1,5 +1,5 @@
 // src/tests/processors/ai-enhancement.test.ts
-import { AIEnhancementProcessor } from '../../processors/AIEnhancement';
+import { AIEnhancementProcessor } from '../../processors/ai-enhancement';
 import { ContentSource, ProcessedContent } from '../../types/content';
 
 jest.mock('../../lib/logger/Logger');

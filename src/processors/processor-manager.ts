@@ -1,6 +1,6 @@
 import { ContentProcessor } from "./types";
-import { ContentStandardizer } from "./ContentStandardizer";
-import { AIEnhancementProcessor } from "./AIEnhancement";
+import { ContentStandardizer } from "./content-standardizer";
+import { AIEnhancementProcessor } from "./ai-enhancement";
 
 export class ProcessorManager {
   private processors: Map<string, ContentProcessor>;

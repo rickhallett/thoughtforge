@@ -1,16 +1,15 @@
-import { ContentWorkflow } from '../../workflows/ContentWorkflow';
-import { QueueManager } from '../../lib/queue/QueueManager';
-import { StateManager } from '../../lib/state/StateManager';
-import { ProcessorManager } from '../../processors/ProcessorManager';
+import { ContentWorkflow } from '../../workflows/content-workflow';
+import { QueueManager } from '../../lib/queue/queue-manager';
+import { StateManager } from '../../lib/state/state-manager';
+import { ProcessorManager } from '../../processors/processor-manager';
 import { ContentInputJob, ContentProcessingJob } from '../../lib/queue/types';
 import { ContentSource } from '../../types/content';
-import { Queue } from 'bull';
 
 // Mock dependencies
-jest.mock('../../lib/queue/QueueManager');
-jest.mock('../../lib/state/StateManager');
-jest.mock('../../processors/ProcessorManager');
-jest.mock('../../lib/logger/Logger');
+jest.mock('../../lib/queue/queue-manager');
+jest.mock('../../lib/state/state-manager');
+jest.mock('../../processors/processor-manager');
+jest.mock('../../lib/logger/logger');
 
 describe('ContentWorkflow', () => {
   let contentWorkflow: ContentWorkflow;

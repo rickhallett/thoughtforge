@@ -1,5 +1,5 @@
 import Bull, { Queue } from "bull";
-import { logger } from "../logger/Logger";
+import { logger } from "../logger/logger";
 import { LoggerUtils } from "../logger/utils";
 
 export class QueueManager {

@@ -1,10 +1,10 @@
-import { logger } from './Logger';
+import { logger } from './logger';
 import { LogContext } from './types';
 
 export class LoggerUtils {
     static logQueueEvent(
-        queueName: string, 
-        eventType: string, 
+        queueName: string,
+        eventType: string,
         context?: LogContext
     ) {
         logger.info(`Queue ${queueName} ${eventType}`, {

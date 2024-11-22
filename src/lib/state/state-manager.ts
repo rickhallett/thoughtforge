@@ -1,5 +1,5 @@
 
-import { logger } from '../logger/Logger';
+import { logger } from '../logger/logger';
 import { ProcessedContent, ContentStatus } from '../../types/content';
 
 export class StateManager {

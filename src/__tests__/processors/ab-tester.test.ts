@@ -1,5 +1,5 @@
 // src/tests/processors/ab-processor.test.ts
-import { ABTestProcessor } from '../../processors/ABTester';
+import { ABTestProcessor } from '../../processors/ab-tester';
 import { ContentSource, ProcessedContent } from '../../types/content';
 
 jest.mock('../../lib/logger/Logger');

@@ -1,5 +1,5 @@
 // src/processors/standardizer.ts
-import { logger } from '../lib/logger/Logger';
+import { logger } from '../lib/logger/logger';
 import { ProcessedContent, ContentSource } from '../types/content';
 import { ContentInputJob } from '../lib/queue/types';
 

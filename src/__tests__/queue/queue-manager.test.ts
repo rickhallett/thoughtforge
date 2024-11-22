@@ -1,4 +1,4 @@
-import { QueueManager } from "../../lib/queue/QueueManager";
+import { QueueManager } from "../../lib/queue/queue-manager";
 
 jest.mock('../../lib/logger/Logger');
 

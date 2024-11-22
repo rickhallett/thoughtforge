@@ -1,4 +1,4 @@
-import { StateManager } from "../../lib/state/StateManager";
+import { StateManager } from "../../lib/state/state-manager";
 
 describe('StateManager', () => {
   it('should store and retrieve values', () => {
