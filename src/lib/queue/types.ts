@@ -42,3 +42,5 @@ export type PublishingPlatform =
   | 'substack'
   | 'wix'
   | 'wordpress';
+
+export { }

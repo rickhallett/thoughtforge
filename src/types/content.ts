@@ -19,11 +19,13 @@ export interface ProcessedContent {
   source: ContentSource;
   createdAt: Date;
   updatedAt: Date;
-  status: 'received' | 'processed';
+  status: ContentStatus;
+  metadata: ContentMetadata;
 }
 
 export type ContentStatus =
   | 'received'      // Initial state
+  | 'standardized'  // Standardized
   | 'processing'    // Being processed
   | 'processed'     // Processing completed 
   | 'failed'        // Processing failed

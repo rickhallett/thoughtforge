@@ -12,8 +12,9 @@ export class QueueManager {
     this.redisOptions = redisOptions;
     this.logger = logger.child({ module: 'QueueManager' });
 
-    // Start with just one queue
     this.createQueue('content-input');
+    this.createQueue('content-processing');
+
   }
 
   private createQueue(name: string): Queue {
