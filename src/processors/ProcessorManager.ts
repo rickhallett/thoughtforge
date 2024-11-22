@@ -1,5 +1,6 @@
 import { ContentProcessor } from "./types";
 import { ContentStandardizer } from "./ContentStandardizer";
+import { AIEnhancementProcessor } from "./AIEnhancement";
 
 export class ProcessorManager {
   private processors: Map<string, ContentProcessor>;
@@ -11,7 +12,7 @@ export class ProcessorManager {
 
   private registerDefaultProcessors() {
     this.registerProcessor('standardization', new ContentStandardizer());
-    // this.registerProcessor('ai-enhancement', new AIProcessor());
+    this.registerProcessor('ai-enhancement', new AIEnhancementProcessor());
     // this.registerProcessor('seo-optimization', new SEOProcessor());
     // this.registerProcessor('ab-generation', new ABProcessor());
   }
