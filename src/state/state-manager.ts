@@ -1,6 +1,6 @@
 
 import { logger } from '../logger/logger';
-import { ProcessedContent, ContentStatus } from '../../types/content';
+import { StructuredContent, ContentStatus } from '../../types/content';
 
 export class StateManager {
     private state = new Map<string, any>();
@@ -17,11 +17,11 @@ export class StateManager {
     }
 
     // Simple namespacing by key prefix
-    getContentState(contentId: string): ProcessedContent | null {
-        return this.get<ProcessedContent>(`content:${contentId}`);
+    getContentState(contentId: string): StructuredContent | null {
+        return this.get<StructuredContent>(`content:${contentId}`);
     }
 
-    setContentState(contentId: string, content: ProcessedContent): void {
+    setContentState(contentId: string, content: StructuredContent): void {
         this.set(`content:${contentId}`, content);
     }
 

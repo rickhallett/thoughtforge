@@ -1,12 +1,12 @@
 // src/tests/processors/ab-processor.test.ts
 import { ABTestProcessor } from '../../processors/ab-tester';
-import { ContentSource, ProcessedContent } from '../../types/content';
+import { ContentSource, StructuredContent } from '../../types/content';
 
 jest.mock('../../lib/logger/Logger');
 
 describe('ABTestProcessor', () => {
   let processor: ABTestProcessor;
-  let sampleContent: ProcessedContent;
+  let sampleContent: StructuredContent;
 
   beforeEach(() => {
     processor = new ABTestProcessor();

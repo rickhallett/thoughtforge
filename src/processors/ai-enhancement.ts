@@ -1,5 +1,5 @@
 import { logger } from '../logger/logger';
-import { ProcessedContent } from '../types/content';
+import { StructuredContent } from '../types/content';
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "langchain/output_parsers";
 import { OutputFixingParser } from "langchain/output_parsers";
@@ -59,7 +59,7 @@ export class AIEnhancementProcessor {
   }
 
   async process(
-    content: ProcessedContent,
+    content: StructuredContent,
     options: AIEnhancementOptions = {
       generateSummary: true,
       extractKeywords: true,
@@ -67,7 +67,7 @@ export class AIEnhancementProcessor {
       improveReadability: true,
       temperature: 0.7
     }
-  ): Promise<ProcessedContent> {
+  ): Promise<StructuredContent> {
     logger.debug('Starting AI enhancement', {
       contentId: content.id,
       options
@@ -116,7 +116,7 @@ export class AIEnhancementProcessor {
     }
   }
 
-  private async addSummary(content: ProcessedContent): Promise<void> {
+  private async addSummary(content: StructuredContent): Promise<void> {
     const summaryPrompt = PromptTemplate.fromTemplate(this.prompts.summary);
     const chain = summaryPrompt.pipe(this.llm).pipe(new StringOutputParser());
 
@@ -127,7 +127,7 @@ export class AIEnhancementProcessor {
     content.metadata.summary = result.trim();
   }
 
-  private async addKeywords(content: ProcessedContent): Promise<void> {
+  private async addKeywords(content: StructuredContent): Promise<void> {
     const parser = StructuredOutputParser.fromZodSchema(
       z.array(z.object({
         keyword: z.string(),
@@ -153,7 +153,7 @@ export class AIEnhancementProcessor {
     }
   }
 
-  private async expandContent(content: ProcessedContent): Promise<void> {
+  private async expandContent(content: StructuredContent): Promise<void> {
     const expansionPrompt = PromptTemplate.fromTemplate(this.prompts.expansion);
     const chain = expansionPrompt.pipe(this.llm);
 
@@ -165,7 +165,7 @@ export class AIEnhancementProcessor {
     content.body = result.trim();
   }
 
-  private async improveReadability(content: ProcessedContent): Promise<void> {
+  private async improveReadability(content: StructuredContent): Promise<void> {
     const parser = StructuredOutputParser.fromZodSchema(
       z.object({
         score: z.number(),
