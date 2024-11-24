@@ -1,5 +1,7 @@
 node_modules/
 dist/
 coverage/
-.env
+.env*
 *.log
+.vscode
+.DS_Store
