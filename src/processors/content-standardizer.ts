@@ -1,10 +1,10 @@
 // src/processors/standardizer.ts
 import { logger } from '../logger/logger';
-import { StructuredContent, ContentSource } from '../types/content';
+import { BaseContent, ContentSource } from '../types/content';
 import { ContentInputJob } from '../lib/queue/types';
 
 export class ContentStandardizer {
-  async process(job: ContentInputJob): Promise<StructuredContent> {
+  async process(job: ContentInputJob): Promise<BaseContent> {
     logger.debug('Starting content standardization', {
       contentId: job.contentId,
       source: job.source
@@ -36,9 +36,9 @@ export class ContentStandardizer {
     contentId: string,
     source: ContentSource,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     // Base content structure
-    const standardContent: StructuredContent = {
+    const standardContent: BaseContent = {
       id: contentId,
       title: '',  // Will be set based on source
       body: raw.content,
@@ -69,9 +69,9 @@ export class ContentStandardizer {
   }
 
   private async standardizeEmailContent(
-    content: StructuredContent,
+    content: BaseContent,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     content.title = raw.metadata?.emailSubject || 'Untitled Email';
     content.metadata = {
       ...content.metadata,
@@ -84,9 +84,9 @@ export class ContentStandardizer {
 
   // TODO: Implement HTML parser
   private async standardizeWebContent(
-    content: StructuredContent,
+    content: BaseContent,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     content.title = raw.metadata?.pageTitle || 'Web Clipping';
     content.metadata = {
       ...content.metadata,
@@ -97,9 +97,9 @@ export class ContentStandardizer {
   }
 
   private async standardizeVoiceContent(
-    content: StructuredContent,
+    content: BaseContent,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     content.title = raw.metadata?.title || 'Voice Note';
     content.metadata = {
       ...content.metadata,
@@ -111,9 +111,9 @@ export class ContentStandardizer {
   }
 
   private async standardizeManualContent(
-    content: StructuredContent,
+    content: BaseContent,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     content.title = raw.metadata?.title || 'Manual Entry';
     content.metadata = {
       ...content.metadata,
@@ -123,9 +123,9 @@ export class ContentStandardizer {
   }
 
   private async standardizeMarkdownContent(
-    content: StructuredContent,
+    content: BaseContent,
     raw: { content: string; metadata?: Record<string, any> }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     content.title = raw.metadata?.title || 'Markdown Clipping';
     content.metadata = {
       ...content.metadata,

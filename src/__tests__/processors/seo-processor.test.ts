@@ -1,12 +1,12 @@
 // src/tests/processors/seo-processor.test.ts
 import { SEOProcessor } from '../../processors/seo-processor';
-import { StructuredContent, ContentSource } from '../../types/content';
+import { BaseContent, ContentSource } from '../../types/content';
 
 jest.mock('../../lib/logger/Logger');
 
 describe('SEOProcessor', () => {
   let processor: SEOProcessor;
-  let sampleContent: StructuredContent;
+  let sampleContent: BaseContent;
 
   beforeEach(() => {
     processor = new SEOProcessor();

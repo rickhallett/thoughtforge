@@ -1,6 +1,6 @@
 // src/processors/seo-processor.ts
 import { logger } from '../logger/logger';
-import { StructuredContent } from '../types/content';
+import { BaseContent } from '../types/content';
 
 export interface SEOOptions {
   analyzeTitleTag?: boolean;
@@ -39,7 +39,7 @@ export interface SEOAnalysis {
 
 export class SEOProcessor {
   async process(
-    content: StructuredContent,
+    content: BaseContent,
     options: SEOOptions = {
       analyzeTitleTag: true,
       analyzeMetaDescription: true,
@@ -48,7 +48,7 @@ export class SEOProcessor {
       suggestInternalLinks: true,
       checkReadability: true
     }
-  ): Promise<StructuredContent> {
+  ): Promise<BaseContent> {
     logger.debug('Starting SEO analysis', {
       contentId: content.id,
       options
@@ -58,7 +58,7 @@ export class SEOProcessor {
       const seoAnalysis = await this.analyzeSEO(content, options);
 
       // Update content with SEO analysis
-      const optimizedContent: StructuredContent = {
+      const optimizedContent: BaseContent = {
         ...content,
         metadata: {
           ...content.metadata,
@@ -86,7 +86,7 @@ export class SEOProcessor {
   }
 
   private async analyzeSEO(
-    content: StructuredContent,
+    content: BaseContent,
     options: SEOOptions
   ): Promise<SEOAnalysis> {
     const analysis: SEOAnalysis = {
@@ -133,7 +133,7 @@ export class SEOProcessor {
   }
 
   private async analyzeTitle(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     const title = content.title;
@@ -161,7 +161,7 @@ export class SEOProcessor {
   }
 
   private async analyzeMetaDescription(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     const description = content.metadata.metaDescription || '';
@@ -183,7 +183,7 @@ export class SEOProcessor {
   }
 
   private async analyzeHeadings(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     // Simple heading analysis based on markdown-style headings
@@ -203,7 +203,7 @@ export class SEOProcessor {
   }
 
   private async analyzeKeywordDensity(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     const keywords = content.metadata.keywords || [];
@@ -238,7 +238,7 @@ export class SEOProcessor {
   }
 
   private async suggestInternalLinks(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     // This would typically integrate with your content database
@@ -251,7 +251,7 @@ export class SEOProcessor {
   }
 
   private async checkReadability(
-    content: StructuredContent,
+    content: BaseContent,
     analysis: SEOAnalysis
   ): Promise<void> {
     // Simple readability score based on sentence length
