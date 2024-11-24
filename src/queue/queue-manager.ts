@@ -12,9 +12,9 @@ export class QueueManager {
     this.redisOptions = redisOptions;
     this.logger = logger.child({ module: 'QueueManager' });
 
-    this.createQueue('content-input');
-    this.createQueue('content-processing');
-
+    this.createQueue('input-stage');
+    this.createQueue('processing-stage');
+    this.createQueue('publishing-stage');
   }
 
   private createQueue(name: string): Queue {

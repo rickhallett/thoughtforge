@@ -12,7 +12,7 @@ export interface RawContent {
   source: ContentSource;
 }
 
-export interface ProcessedContent {
+export interface BaseContent {
   id: string;
   title: string;
   body: string;

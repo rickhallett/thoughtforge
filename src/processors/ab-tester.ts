@@ -1,6 +1,6 @@
 // src/processors/ab-processor.ts
 import { logger } from '../logger/logger';
-import { ProcessedContent } from '../types/content';
+import { BaseContent } from '../types/content';
 
 export interface ABTestingOptions {
   generateTitleVariants?: boolean;
@@ -31,7 +31,7 @@ export interface ABTestingResult {
 
 export class ABTestProcessor {
   async process(
-    content: ProcessedContent,
+    content: BaseContent,
     options: ABTestingOptions = {
       generateTitleVariants: true,
       generateIntroVariants: true,
@@ -39,7 +39,7 @@ export class ABTestProcessor {
       generateStructureVariants: true,
       variantsPerType: 2
     }
-  ): Promise<ProcessedContent> {
+  ): Promise<BaseContent> {
     logger.debug('Starting A/B variant generation', {
       contentId: content.id,
       options
@@ -49,7 +49,7 @@ export class ABTestProcessor {
       const abTestingResult = await this.generateVariants(content, options);
 
       // Update content with A/B testing variants
-      const contentWithVariants: ProcessedContent = {
+      const contentWithVariants: BaseContent = {
         ...content,
         metadata: {
           ...content.metadata,
@@ -80,7 +80,7 @@ export class ABTestProcessor {
   }
 
   private async generateVariants(
-    content: ProcessedContent,
+    content: BaseContent,
     options: ABTestingOptions
   ): Promise<ABTestingResult> {
     const result: ABTestingResult = {

@@ -1,6 +1,6 @@
 // src/tests/processors/ai-enhancement.test.ts
 import { AIEnhancementProcessor } from '../../processors/ai-enhancement';
-import { ContentSource, ContentStatus, ProcessedContent } from '../../types/content';
+import { ContentSource, ContentStatus, BaseContent } from '../../types/content';
 
 // Mock OpenAI
 jest.mock('@langchain/openai', () => ({
@@ -17,7 +17,7 @@ jest.mock('fs/promises', () => ({
 
 describe('AIEnhancementProcessor', () => {
   let processor: AIEnhancementProcessor;
-  let mockContent: ProcessedContent;
+  let mockContent: BaseContent;
 
   beforeEach(() => {
     jest.clearAllMocks();

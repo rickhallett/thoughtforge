@@ -82,8 +82,8 @@ export class ContentWorkflow {
             }
 
             // Process using the processor manager
-            const processedContent = await this.processorManager.process(step, content);
-            this.stateManager.setContentState(contentId, processedContent);
+            const BaseContent = await this.processorManager.process(step, content);
+            this.stateManager.setContentState(contentId, BaseContent);
 
             // Queue next step or finish
             const nextStep = this.getNextStep(step);
