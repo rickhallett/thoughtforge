@@ -1,106 +1,157 @@
 // src/tests/processors/ai-enhancement.test.ts
 import { AIEnhancementProcessor } from '../../processors/ai-enhancement';
-import { ContentSource, ProcessedContent } from '../../types/content';
+import { ContentSource, ContentStatus, ProcessedContent } from '../../types/content';
 
-jest.mock('../../lib/logger/Logger');
+// Mock OpenAI
+jest.mock('@langchain/openai', () => ({
+  OpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue('mocked response'),
+  }))
+}));
+
+// Mock fs/promises
+jest.mock('fs/promises', () => ({
+  readdir: jest.fn().mockResolvedValue(['summary.txt', 'keywords.txt', 'expansion.txt', 'readability.txt']),
+  readFile: jest.fn().mockResolvedValue('Mock prompt template text'),
+}));
 
 describe('AIEnhancementProcessor', () => {
   let processor: AIEnhancementProcessor;
-  let sampleContent: ProcessedContent;
+  let mockContent: ProcessedContent;
 
   beforeEach(() => {
-    processor = new AIEnhancementProcessor();
-    sampleContent = {
+    jest.clearAllMocks();
+    processor = new AIEnhancementProcessor('fake-api-key');
+    mockContent = {
       id: 'test-123',
       title: 'Test Content',
-      body: 'This is a sample article about artificial intelligence and machine learning. ' +
-        'The technology has made significant advances in recent years.',
-      source: ContentSource.MANUAL,
+      body: 'This is test content.',
+      metadata: {},
+      source: 'test' as ContentSource,
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'processing',
-      metadata: {}
+      status: 'ready' as ContentStatus,
     };
   });
 
-  describe('Basic Enhancement', () => {
-    it('should process content with default options', async () => {
-      const result = await processor.process(sampleContent);
-
-      expect(result.metadata.aiEnhanced).toBe(true);
-      expect(result.metadata.aiEnhancementTimestamp).toBeDefined();
-      expect(result.metadata.summary).toBeDefined();
-      expect(result.metadata.keywords).toBeDefined();
-      expect(result.metadata.readabilityScore).toBeDefined();
+  describe('Constructor', () => {
+    test('should initialize with provided API key', () => {
+      const processor = new AIEnhancementProcessor('custom-key');
+      expect(processor).toBeInstanceOf(AIEnhancementProcessor);
     });
 
-    it('should preserve original content when not expanding', async () => {
-      const result = await processor.process(sampleContent, {
-        generateSummary: true,
-        expandContent: false
-      });
-
-      expect(result.body).toBe(sampleContent.body);
+    test('should initialize with environment API key', () => {
+      process.env.OPENAI_API_KEY = 'env-key';
+      const processor = new AIEnhancementProcessor();
+      expect(processor).toBeInstanceOf(AIEnhancementProcessor);
     });
   });
 
-  describe('Specific Enhancements', () => {
-    it('should generate summary when requested', async () => {
-      const result = await processor.process(sampleContent, {
-        generateSummary: true
-      });
-
-      expect(result.metadata.summary).toBeDefined();
-      expect(typeof result.metadata.summary).toBe('string');
+  describe('Process Method', () => {
+    test('should process content with default options', async () => {
+      const result = await processor.process(mockContent);
+      expect(result).toBeDefined();
+      expect(result.metadata).toHaveProperty('summary');
+      expect(result.metadata).toHaveProperty('keywords');
+      expect(result.metadata).toHaveProperty('readability');
     });
 
-    it('should extract keywords when requested', async () => {
-      const result = await processor.process(sampleContent, {
-        extractKeywords: true
+    test('should process content with custom options', async () => {
+      const result = await processor.process(mockContent, {
+        generateSummary: true,
+        extractKeywords: false,
+        expandContent: false,
+        improveReadability: false,
       });
-
-      expect(result.metadata.keywords).toBeDefined();
-      expect(Array.isArray(result.metadata.keywords)).toBe(true);
-      expect(result.metadata.keywords.length).toBeGreaterThan(0);
+      expect(result.metadata).toHaveProperty('summary');
+      expect(result.metadata).not.toHaveProperty('keywords');
+      expect(result.metadata).not.toHaveProperty('readability');
     });
 
-    it('should expand content when requested', async () => {
-      const result = await processor.process(sampleContent, {
-        expandContent: true
+    test('should handle content expansion', async () => {
+      const result = await processor.process(mockContent, {
+        generateSummary: false,
+        extractKeywords: false,
+        expandContent: true,
+        improveReadability: false,
       });
-
-      expect(result.body.length).toBeGreaterThan(sampleContent.body.length);
-    });
-
-    it('should analyze readability when requested', async () => {
-      const result = await processor.process(sampleContent, {
-        improveReadability: true
-      });
-
-      expect(result.metadata.readabilityScore).toBeDefined();
-      expect(result.metadata.suggestedImprovements).toBeDefined();
+      expect(result.metadata).toHaveProperty('originalContent');
+      expect(result.body).not.toBe(mockContent.body);
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle empty content', async () => {
-      const emptyContent = {
-        ...sampleContent,
-        body: ''
-      };
+    test('should handle OpenAI API errors', async () => {
+      // Mock OpenAI to throw an error
+      jest.mock('@langchain/openai', () => ({
+        OpenAI: jest.fn().mockImplementation(() => ({
+          invoke: jest.fn().mockRejectedValue(new Error('API Error')),
+        }))
+      }));
 
-      const result = await processor.process(emptyContent);
-      expect(result.metadata.aiEnhanced).toBe(true);
+      await expect(processor.process(mockContent)).rejects.toThrow();
     });
 
-    it('should handle very short content', async () => {
-      const shortContent = {
-        ...sampleContent,
-        body: 'Short.'
+    test('should handle prompt loading errors', async () => {
+      // Mock fs to throw an error
+      jest.mock('fs/promises', () => ({
+        readdir: jest.fn().mockRejectedValue(new Error('File system error')),
+      }));
+
+      await expect(processor.process(mockContent)).rejects.toThrow();
+    });
+  });
+
+  describe('Parser Handling', () => {
+    test('should handle malformed keyword responses', async () => {
+      // Mock OpenAI to return malformed data
+      const mockOpenAI = jest.fn().mockResolvedValue('invalid json');
+      jest.mock('@langchain/openai', () => ({
+        OpenAI: jest.fn().mockImplementation(() => ({
+          invoke: mockOpenAI,
+        }))
+      }));
+
+      const result = await processor.process(mockContent, {
+        generateSummary: false,
+        extractKeywords: true,
+        expandContent: false,
+        improveReadability: false,
+      });
+
+      expect(result.metadata.keywords).toBeDefined();
+    });
+
+    test('should handle malformed readability responses', async () => {
+      // Mock OpenAI to return malformed data
+      const mockOpenAI = jest.fn().mockResolvedValue('invalid json');
+      jest.mock('@langchain/openai', () => ({
+        OpenAI: jest.fn().mockImplementation(() => ({
+          invoke: mockOpenAI,
+        }))
+      }));
+
+      const result = await processor.process(mockContent, {
+        generateSummary: false,
+        extractKeywords: false,
+        expandContent: false,
+        improveReadability: true,
+      });
+
+      expect(result.metadata.readability).toBeDefined();
+    });
+  });
+
+  describe('Content Chunking', () => {
+    test('should handle large content appropriately', async () => {
+      const largeContent = {
+        ...mockContent,
+        body: 'a'.repeat(5000), // Create a large piece of content
       };
 
-      const result = await processor.process(shortContent);
-      expect(result.metadata.aiEnhanced).toBe(true);
+      const result = await processor.process(largeContent);
+      expect(result).toBeDefined();
+      expect(result.metadata).toHaveProperty('summary');
     });
   });
 });

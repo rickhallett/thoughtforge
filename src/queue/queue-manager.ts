@@ -1,6 +1,6 @@
 import Bull, { Queue } from "bull";
-import { logger } from "../logger/logger";
-import { LoggerUtils } from "../logger/utils";
+import { logger } from "./../logger/logger";
+import { LoggerUtils } from "./../logger/utils";
 
 export class QueueManager {
   private queues: Map<string, Queue>;
@@ -20,7 +20,6 @@ export class QueueManager {
   private createQueue(name: string): Queue {
     const queue = new Bull(name, {
       redis: this.redisOptions,
-      // Optional: default job options
       defaultJobOptions: {
         attempts: 3,
         removeOnComplete: true,
@@ -37,7 +36,7 @@ export class QueueManager {
     });
 
     this.queues.set(name, queue);
-    // this.logger.info(`Queue ${name} created`);
+
     return queue;
   }
 

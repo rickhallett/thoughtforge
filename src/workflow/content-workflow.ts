@@ -1,7 +1,7 @@
 import { ProcessorManager } from "../processors/processor-manager";
 import { QueueManager } from "../lib/queue/queue-manager";
 import { StateManager } from "../lib/state/state-manager";
-import { logger } from "../lib/logger/logger";
+import { logger } from "../logger/logger";
 import { ContentInputJob, ContentProcessingJob } from "src/lib/queue/types";
 
 /**

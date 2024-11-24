@@ -1,26 +1,61 @@
-// src/processors/ai-enhancement.ts
-import { logger } from '../lib/logger/logger';
+import { logger } from '../logger/logger';
 import { ProcessedContent } from '../types/content';
-// import { LangChain } from 'langchain'; // Note: You'll need to add proper LangChain imports
+import { PromptTemplate } from "@langchain/core/prompts";
+import { StructuredOutputParser } from "langchain/output_parsers";
+import { OutputFixingParser } from "langchain/output_parsers";
+import { OpenAI } from "@langchain/openai";
+import { z } from "zod";
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { StringOutputParser } from "@langchain/core/output_parsers";
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 export interface AIEnhancementOptions {
   generateSummary?: boolean;
   extractKeywords?: boolean;
   expandContent?: boolean;
   improveReadability?: boolean;
+  temperature?: number;
 }
 
-export interface AIEnhancementResult {
-  summary?: string;
-  keywords?: string[];
-  expandedContent?: string;
-  readabilityScore?: number;
-  suggestedImprovements?: string[];
+interface EnhancementPrompts {
+  [key: string]: string;
 }
 
 export class AIEnhancementProcessor {
-  constructor() {
-    // Initialize LangChain configuration here
+  private llm: OpenAI;
+  private prompts: EnhancementPrompts = {};
+
+  constructor(apiKey?: string) {
+    this.llm = new OpenAI({
+      openAIApiKey: apiKey || process.env.OPENAI_API_KEY,
+      temperature: 0.7,
+      modelName: 'gpt-4o-mini'
+    });
+  }
+
+  private async loadPrompts(): Promise<void> {
+    try {
+      const promptsDir = path.join(process.cwd(), 'src', 'lib', 'prompts', 'templates');
+
+      // create array of all file names in prompts directory
+      const files = await fs.readdir(promptsDir);
+
+      // read each file and store in prompts object
+      this.prompts = Object.fromEntries(await Promise.all(files.map(async (file) => {
+        return [
+          file.split('.')[0],
+          await fs.readFile(path.join(promptsDir, file), 'utf-8')
+        ];
+      })));
+
+      logger.debug('Prompts loaded successfully');
+    } catch (error) {
+      logger.error('Failed to load prompts', { error });
+      throw new Error('Failed to load prompt templates');
+    }
   }
 
   async process(
@@ -29,7 +64,8 @@ export class AIEnhancementProcessor {
       generateSummary: true,
       extractKeywords: true,
       expandContent: false,
-      improveReadability: true
+      improveReadability: true,
+      temperature: 0.7
     }
   ): Promise<ProcessedContent> {
     logger.debug('Starting AI enhancement', {
@@ -38,30 +74,35 @@ export class AIEnhancementProcessor {
     });
 
     try {
-      const enhancementResult = await this.enhance(content, options);
-
-      // Update content with AI enhancements
-      const enhancedContent: ProcessedContent = {
-        ...content,
-        metadata: {
-          ...content.metadata,
-          aiEnhanced: true,
-          aiEnhancementTimestamp: new Date().toISOString(),
-          summary: enhancementResult.summary,
-          keywords: enhancementResult.keywords,
-          readabilityScore: enhancementResult.readabilityScore,
-          suggestedImprovements: enhancementResult.suggestedImprovements
-        }
-      };
-
-      // If content expansion was requested and successful, update content
-      if (options.expandContent && enhancementResult.expandedContent) {
-        enhancedContent.body = enhancementResult.expandedContent;
+      // Ensure prompts are loaded before processing
+      if (!this.prompts) {
+        await this.loadPrompts();
       }
+
+      const enhancedContent = { ...content };
+      const tasks: Promise<void>[] = [];
+
+      if (options.generateSummary) {
+        tasks.push(this.addSummary(enhancedContent));
+      }
+
+      if (options.extractKeywords) {
+        tasks.push(this.addKeywords(enhancedContent));
+      }
+
+      if (options.expandContent) {
+        tasks.push(this.expandContent(enhancedContent));
+      }
+
+      if (options.improveReadability) {
+        tasks.push(this.improveReadability(enhancedContent));
+      }
+
+      await Promise.all(tasks);
 
       logger.info('AI enhancement completed', {
         contentId: content.id,
-        enhancements: Object.keys(enhancementResult)
+        enhancements: Object.keys(options).filter(key => options[key])
       });
 
       return enhancedContent;
@@ -75,63 +116,102 @@ export class AIEnhancementProcessor {
     }
   }
 
-  private async enhance(
-    content: ProcessedContent,
-    options: AIEnhancementOptions
-  ): Promise<AIEnhancementResult> {
-    const result: AIEnhancementResult = {};
+  private async addSummary(content: ProcessedContent): Promise<void> {
+    const summaryPrompt = PromptTemplate.fromTemplate(this.prompts.summary);
+    const chain = summaryPrompt.pipe(this.llm).pipe(new StringOutputParser());
 
-    if (options.generateSummary) {
-      result.summary = await this.generateSummary(content.body);
-    }
+    const result = await chain.invoke({
+      content: content.body
+    });
 
-    if (options.extractKeywords) {
-      result.keywords = await this.extractKeywords(content.body);
-    }
-
-    if (options.expandContent) {
-      result.expandedContent = await this.expandContent(content.body);
-    }
-
-    if (options.improveReadability) {
-      const readabilityAnalysis = await this.analyzeReadability(content.body);
-      result.readabilityScore = readabilityAnalysis.score;
-      result.suggestedImprovements = readabilityAnalysis.suggestions;
-    }
-
-    return result;
+    content.metadata.summary = result.trim();
   }
 
-  private async generateSummary(text: string): Promise<string> {
-    // TODO: Implement with LangChain
-    // This is a placeholder implementation
-    return text.slice(0, 200) + '...';
+  private async addKeywords(content: ProcessedContent): Promise<void> {
+    const parser = StructuredOutputParser.fromZodSchema(
+      z.array(z.object({
+        keyword: z.string(),
+        relevance: z.number(),
+        related: z.array(z.string())
+      }))
+    );
+
+    const formatInstructions = parser.getFormatInstructions();
+    const keywordPrompt = PromptTemplate.fromTemplate(
+      `${this.prompts.keywords}\n\n${formatInstructions}`
+    );
+
+    const chain = keywordPrompt.pipe(this.llm);
+    const result = await chain.invoke({ content: content.body });
+
+    try {
+      const keywords = await parser.parse(result);
+      content.metadata.keywords = keywords;
+    } catch (e) {
+      const fixingParser = OutputFixingParser.fromLLM(this.llm, parser);
+      content.metadata.keywords = await fixingParser.parse(result);
+    }
   }
 
-  private async extractKeywords(text: string): Promise<string[]> {
-    // TODO: Implement with LangChain
-    // This is a placeholder implementation
-    return text.toLowerCase()
-      .split(' ')
-      .filter(word => word.length > 5)
-      .slice(0, 5);
+  private async expandContent(content: ProcessedContent): Promise<void> {
+    const expansionPrompt = PromptTemplate.fromTemplate(this.prompts.expansion);
+    const chain = expansionPrompt.pipe(this.llm);
+
+    const result = await chain.invoke({
+      content: content.body
+    });
+
+    content.metadata.originalContent = content.body;
+    content.body = result.trim();
   }
 
-  private async expandContent(text: string): Promise<string> {
-    // TODO: Implement with LangChain
-    // This is a placeholder implementation
-    return text + '\n\nExpanded content placeholder...';
+  private async improveReadability(content: ProcessedContent): Promise<void> {
+    const parser = StructuredOutputParser.fromZodSchema(
+      z.object({
+        score: z.number(),
+        suggestions: z.array(z.string()),
+        analysis: z.object({
+          sentenceComplexity: z.string(),
+          paragraphStructure: z.string(),
+          vocabularyUsage: z.string(),
+          voiceAndTone: z.string()
+        })
+      })
+    );
+
+    const formatInstructions = parser.getFormatInstructions();
+    const readabilityPrompt = PromptTemplate.fromTemplate(
+      `${this.prompts.readability}\n\n${formatInstructions}`
+    );
+
+    const chain = readabilityPrompt.pipe(this.llm);
+    const result = await chain.invoke({ content: content.body });
+
+    try {
+      const readabilityAnalysis = await parser.parse(result);
+      content.metadata.readability = readabilityAnalysis;
+    } catch (e) {
+      const fixingParser = OutputFixingParser.fromLLM(this.llm, parser);
+      content.metadata.readability = await fixingParser.parse(result);
+    }
   }
 
-  private async analyzeReadability(text: string): Promise<{
-    score: number;
-    suggestions: string[];
-  }> {
-    // TODO: Implement with LangChain
-    // This is a placeholder implementation
-    return {
-      score: 0.8,
-      suggestions: ['Make sentences shorter', 'Use simpler words']
-    };
+  // Helper method to chunk content for token limits
+  private chunkContent(content: string, maxChunkSize: number = 1000): string[] {
+    const paragraphs = content.split('\n\n');
+    const chunks: string[] = [];
+    let currentChunk = '';
+
+    for (const paragraph of paragraphs) {
+      if ((currentChunk + paragraph).length <= maxChunkSize) {
+        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      } else {
+        if (currentChunk) chunks.push(currentChunk);
+        currentChunk = paragraph;
+      }
+    }
+
+    if (currentChunk) chunks.push(currentChunk);
+    return chunks;
   }
 }
