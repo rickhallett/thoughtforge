@@ -1,49 +1,5 @@
-# Dependencies
 node_modules/
-npm-debug.log*
-package-lock.json
-pnpm-lock.yaml
-
-# TypeScript
-*.tsbuildinfo
 dist/
-build/
-
-# IDE and editors
-.vscode/
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Testing
 coverage/
-
-# Debug
-.debug/
-
-# Environment variables
 .env
-.env.*
-
-# Logs
-logs/
 *.log
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-dump.rdb
