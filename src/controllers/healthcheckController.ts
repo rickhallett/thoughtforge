@@ -6,8 +6,6 @@ export class HealthcheckController {
 
   constructor() {
     this.healthcheckService = new HealthcheckService();
-    this.ping = this.ping.bind(this);
-    this.checkHealth = this.checkHealth.bind(this);
   }
 
   ping = async (_: Request, res: Response): Promise<void> => {

@@ -14,7 +14,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 })
 
 app.use('/api/content', contentRoutes);
-app.use('/api/healthcheck', healthcheckRoutes);
+app.use('/api/health', healthcheckRoutes);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   errorHandler(err, req, res, next);
