@@ -5,6 +5,6 @@ const router = Router();
 const healthcheckController = new HealthcheckController();
 
 router.get('/ping', healthcheckController.ping);
-router.get('/health', healthcheckController.checkHealth);
+router.get('/status', healthcheckController.status);
 
 export default router;

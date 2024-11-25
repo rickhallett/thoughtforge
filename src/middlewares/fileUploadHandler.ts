@@ -18,19 +18,29 @@ export const handleFileUpload = (req: FileUploadRequest, res: Response, next: Ne
     return next();
   }
 
-  const boundary = contentType.split('boundary=')[1];
   let body = '';
+  req.files = [];
   const files: UploadedFile[] = [];
   let currentFile: UploadedFile | null = null;
   let fileStream: fs.WriteStream | null = null;
+  const boundary = req.headers['content-type']?.split('boundary=')[1];
 
   req.on('data', (chunk: Buffer) => {
     if (fileStream) {
-      fileStream.write(chunk);
-      return;
+      const chunkString = chunk.toString();
+      if (boundary && chunkString.includes(boundary)) {
+        fileStream.end();
+        files.push(currentFile!);
+        currentFile = null;
+        fileStream = null;
+        body = chunkString;
+      } else {
+        fileStream.write(chunk);
+        return;
+      }
+    } else {
+      body += chunk.toString();
     }
-    
-    body += chunk.toString();
     
     if (body.includes('Content-Disposition: form-data; name="') && !currentFile) {
       const headerEnd = body.indexOf('\r\n\r\n');

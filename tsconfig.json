@@ -20,7 +20,7 @@
   "include": [
     "src/**/*.ts",
     "prisma/seed.ts"
-  ],
+, "tests/middlewares/fileUploadHandler.test.ts"  ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts"

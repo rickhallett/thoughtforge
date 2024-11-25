@@ -13,7 +13,7 @@ export class HealthcheckController {
     res.json({ message: 'pong' });
   };
 
-  checkHealth = async (req: Request, res: Response): Promise<void> => {
+  status = async (req: Request, res: Response): Promise<void> => {
     const { results, errors } = await this.healthcheckService.checkHealth(req);
     res.json({ results, errors });
   };

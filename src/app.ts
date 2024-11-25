@@ -4,9 +4,13 @@ import { prisma } from './prisma';
 
 import contentRoutes from './routes/contentRoutes';
 import healthcheckRoutes from './routes/healthcheckRoutes';
+import { handleFileUpload } from './middlewares/fileUploadHandler';
+
 const app = express();
 
 app.use(express.json());
+
+app.use(handleFileUpload);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.prisma = prisma;
