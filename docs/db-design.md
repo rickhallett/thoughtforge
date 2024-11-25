@@ -1,7 +1,3 @@
-Certainly! Based on your requirements and future expansion plans, I’ve designed a set of Prisma models that should serve your project’s initial needs while allowing for easy future extensions without heavy migrations. Below are the models along with explanations for each design decision.
-
-Prisma Schema Models
-
 ```prisma
 // prisma/schema.prisma
 
