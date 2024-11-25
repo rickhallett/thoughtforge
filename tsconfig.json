@@ -7,7 +7,14 @@
     "strict": true,
     "esModuleInterop": true,
     "types": [
-      "express"
+      "express",
+      "jest",
+      "node"
+    ],
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types",
+      "./node_modules/jest"
     ]
   },
   "include": [
