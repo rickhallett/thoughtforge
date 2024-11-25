@@ -8,12 +8,15 @@ export class ContentController {
     this.contentService = new ContentService();
   }
 
-  async processContent(req: Request, res: Response) {
+  async processContent(req: Request, res: Response): Promise<void> {
     try {
       const result = await this.contentService.processContent(req.body.content);
-      return res.json(result);
+      res.json(result);
     } catch (error) {
-      throw error;
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 }
