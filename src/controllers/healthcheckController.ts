@@ -11,10 +11,10 @@ export class HealthcheckController {
   ping = async (_: Request, res: Response): Promise<void> => {
     await this.healthcheckService.ping();
     res.json({ message: 'pong' });
-  }
+  };
 
   checkHealth = async (req: Request, res: Response): Promise<void> => {
     const { results, errors } = await this.healthcheckService.checkHealth(req);
     res.json({ results, errors });
-  }
+  };
 }

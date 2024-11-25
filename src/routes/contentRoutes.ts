@@ -9,13 +9,9 @@ const contentController = new ContentController();
 const contentProcessSchema = z.object({
   content: z.string(),
   type: z.enum(['markdown', 'text', 'html']),
-  options: z.object({}).optional()
+  options: z.object({}).optional(),
 });
 
-router.post(
-  '/process',
-  validateRequest(contentProcessSchema),
-  contentController.processContent
-);
+router.post('/process', validateRequest(contentProcessSchema), contentController.processContent);
 
 export default router;

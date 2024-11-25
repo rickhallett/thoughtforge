@@ -16,9 +16,7 @@ function registerHealthCheck(
 }
 
 export default class HealthcheckService {
-  constructor() {
-
-  }
+  constructor() {}
 
   async ping(): Promise<void> {
     return Promise.resolve();
@@ -84,7 +82,7 @@ export default class HealthcheckService {
     return Promise.reject(new Error('Not implemented'));
   }
 
-  async checkHealth(req: Request): Promise<{ results: Record<string, string>, errors: string[] }> {
+  async checkHealth(req: Request): Promise<{ results: Record<string, string>; errors: string[] }> {
     const results: Record<string, string> = {};
     const errors: string[] = [];
 

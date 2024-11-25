@@ -11,7 +11,7 @@ app.use(express.json());
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.prisma = prisma;
   next();
-})
+});
 
 app.use('/api/content', contentRoutes);
 app.use('/api/health', healthcheckRoutes);
