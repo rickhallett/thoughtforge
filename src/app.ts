@@ -5,10 +5,13 @@ import { prisma } from './prisma';
 import contentRoutes from './routes/contentRoutes';
 import healthcheckRoutes from './routes/healthcheckRoutes';
 import { handleFileUpload } from './middlewares/fileUploadHandler';
+import { requestLogger } from './utils/logger';
 
 const app = express();
 
 app.use(express.json());
+
+app.use(requestLogger);
 
 app.use(handleFileUpload);
 
