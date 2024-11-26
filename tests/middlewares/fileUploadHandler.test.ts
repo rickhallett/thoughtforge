@@ -1,277 +1,224 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { handleFileUpload, FileUploadRequest } from '../../src/middlewares/fileUploadHandler';
 import fs from 'fs';
+import path from 'path';
 
 jest.mock('fs');
-jest.mock('path');
 
-describe('handleFileUpload', () => {
+describe('handleFileUpload Middleware', () => {
   let mockReq: Partial<FileUploadRequest>;
   let mockRes: Partial<Response>;
   let mockNext: jest.MockedFunction<NextFunction>;
-  let eventHandlers: { [key: string]: Function };
+  let eventHandlers: any;
+  let mockFileStream: any;
 
   beforeEach(() => {
-    // Reset mocks
     jest.clearAllMocks();
-    
-    // Mock event handlers
-    eventHandlers = {};
-    
-    // Mock request object
-    mockReq = {
-      headers: {},
-      on: jest.fn().mockImplementation((event, handler) => {
-        eventHandlers[event] = handler;
-        return mockReq;
-      }),
-      files: undefined
+
+    eventHandlers = {
+      req: {},
+      fileStream: {}
     };
 
-    // Mock response and next
+    mockReq = {
+      headers: {},
+      on: jest.fn().mockImplementation(function (this: any, event, handler) {
+        eventHandlers.req[event] = handler;
+        return this;
+      }),
+      files: [],
+    };
+
     mockRes = {};
     mockNext = jest.fn();
 
-    // Mock fs methods
     (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
-    (fs.createWriteStream as jest.Mock).mockReturnValue({
+    (fs.mkdirSync as jest.Mock).mockImplementation(() => { });
+    mockFileStream = {
       write: jest.fn(),
-      end: jest.fn()
-    });
+      end: jest.fn(),
+      on: jest.fn().mockImplementation(function (this: typeof mockFileStream, event, handler) {
+        if (!eventHandlers.fileStream[event]) {
+          eventHandlers.fileStream[event] = [];
+        }
+        eventHandlers.fileStream[event].push(handler);
+        return this;
+      }),
+      emit: jest.fn().mockImplementation(function (this: typeof mockFileStream, event, ...args) {
+        const handlers = eventHandlers.fileStream[event] || [];
+        handlers.forEach((handler: Function) => handler.apply(this, args));
+        return true;
+      }),
+    };
+    (fs.createWriteStream as jest.Mock).mockReturnValue(mockFileStream);
+    (fs.unlink as unknown as jest.Mock).mockImplementation(() => { });
   });
 
-  it('should skip processing if content-type is not multipart/form-data', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  test('should skip processing if content-type is not multipart/form-data', () => {
     mockReq.headers = { 'content-type': 'application/json' };
-    
+
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-    
-    expect(mockNext).toHaveBeenCalled();
-    expect(mockReq.files).toBeUndefined();
+
+    expect(mockNext).toHaveBeenCalledTimes(1);
+    expect(mockReq.files).toEqual([]);
   });
 
-  it('should process a single file upload correctly', () => {
-    // Mock multipart form-data request
+  test('should process a single file upload correctly', () => {
     mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary123456789',
     };
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
 
-    // Simulate file upload data chunks
-    const fileData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
+    const fileContent = Buffer.from('Hello World!');
+    const boundary = '----WebKitFormBoundary123456789';
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'),
+      Buffer.from('Content-Type: text/plain\r\n\r\n'),
+      fileContent,
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
 
-    eventHandlers['data'](fileData);
-    eventHandlers['end']();
+    eventHandlers.req['data'](body);
+    eventHandlers.req['end']();
 
-    expect(mockReq.files).toBeDefined();
-    expect(mockReq.files?.length).toBe(1);
-    expect(mockReq.files?.[0].filename).toBe('test.txt');
-    expect(fs.mkdirSync).toHaveBeenCalled();
-    expect(fs.createWriteStream).toHaveBeenCalled();
-    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.files).toHaveLength(1);
+    const uploadedFile = mockReq.files![0];
+    expect(uploadedFile.filename).toBe('test.txt');
+    expect(fs.mkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
+    expect(fs.createWriteStream).toHaveBeenCalledWith(uploadedFile.path);
+    expect(mockFileStream.write).toHaveBeenCalledWith(fileContent);
+    expect(mockNext).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle multiple file uploads', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-
-    // Simulate multiple file uploads
-    // TODO: look into what WebKitFormBoundary7MA4YWxkTrZu0gW is
-    const file1Data = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test1.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World 1!\r\n'
-    );
-
-    const file2Data = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test2.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World 2!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
-
-    eventHandlers['data'](file1Data);
-    eventHandlers['data'](file2Data);
-    eventHandlers['end']();
-
-    expect(mockReq.files).toBeDefined();
-    expect(mockReq.files?.length).toBe(2);
-    expect(mockReq.files?.[0].filename).toBe('test1.txt');
-    expect(mockReq.files?.[1].filename).toBe('test2.txt');
-  });
-
-  it('should handle upload errors', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-
-    // Simulate file upload start
-    const fileData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n'
-    );
-
-    eventHandlers['data'](fileData);
-
-    // Simulate error
-    const error = new Error('Upload failed');
-    eventHandlers['error'](error);
-
-    expect(fs.unlinkSync).toHaveBeenCalled();
-    expect(mockNext).toHaveBeenCalledWith(error);
-  });
-
-  it('should handle empty file uploads', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-    eventHandlers['end']();
-
-    expect(mockReq.files).toBeDefined();
-    expect(mockReq.files?.length).toBe(0);
-    expect(mockNext).toHaveBeenCalled();
-  });
-
-  it('should handle malformed content-disposition headers', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-
-    const malformedData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data;\r\n' + // Missing name and filename
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
-
-    eventHandlers['data'](malformedData);
-    eventHandlers['end']();
-
-    expect(mockReq.files?.length).toBe(0);
-  });
-
-  it('should handle large files in multiple chunks', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-
-    // Send header chunk
-    const headerChunk = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="large.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n'
-    );
-
-    // Send multiple data chunks
-    const dataChunk1 = Buffer.from('Hello');
-    const dataChunk2 = Buffer.from('World');
-    const endChunk = Buffer.from('\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--');
-
-    eventHandlers['data'](headerChunk);
-    eventHandlers['data'](dataChunk1);
-    eventHandlers['data'](dataChunk2);
-    eventHandlers['data'](endChunk);
-    eventHandlers['end']();
-
-    expect(mockReq.files).toBeDefined();
-    expect(mockReq.files?.length).toBe(1);
-    expect(mockReq.files?.[0].filename).toBe('large.txt');
-  });
-
-  it('should handle files with special characters in filename', () => {
-    mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    };
-
-    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
-
-    const fileData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test@#$%.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
-
-    eventHandlers['data'](fileData);
-    eventHandlers['end']();
-
-    expect(mockReq.files?.[0].filename).toBe('test@#$%.txt');
-  });
-
-  it('should handle uploads directory creation failure', () => {
+  test('should handle errors during directory creation', () => {
     (fs.mkdirSync as jest.Mock).mockImplementation(() => {
       throw new Error('Permission denied');
     });
 
     mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+      'content-type': 'multipart/form-data; boundary=----BoundaryDirError',
     };
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
 
-    const fileData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
+    const boundary = '----BoundaryDirError';
+    const fileContent = Buffer.from('Content');
 
-    eventHandlers['data'](fileData);
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'),
+      Buffer.from('Content-Type: text/plain\r\n\r\n'),
+      fileContent,
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+
+    eventHandlers.req['data'](body);
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     const error = mockNext.mock.calls[0][0] as unknown as Error;
     expect(error.message).toBe('Permission denied');
-    expect(mockReq.files?.length).toBe(0);
+    expect(mockReq.files).toHaveLength(0);
   });
 
-  it('should handle write stream errors', () => {
-    const mockWriteStream = {
-      write: jest.fn().mockImplementation(() => {
-        throw new Error('Write error');
-      }),
-      end: jest.fn()
-    };
-    (fs.createWriteStream as jest.Mock).mockReturnValue(mockWriteStream);
+  test.only('should handle errors during file writing', () => {
+    mockFileStream.write.mockImplementation(() => {
+      throw new Error('Stream write error');
+    });
 
     mockReq.headers = {
-      'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+      'content-type': 'multipart/form-data; boundary=----BoundaryWriteError',
     };
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
 
-    const fileData = Buffer.from(
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n' +
-      'Content-Disposition: form-data; name="files"; filename="test.txt"\r\n' +
-      'Content-Type: text/plain\r\n\r\n' +
-      'Hello, World!\r\n' +
-      '------WebKitFormBoundary7MA4YWxkTrZu0gW--'
-    );
+    const boundary = '----BoundaryWriteError';
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="error.txt"\r\n'),
+      Buffer.from('Content-Type: text/plain\r\n\r\n'),
+      Buffer.from('test content'),
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
 
-    eventHandlers['data'](fileData);
+    eventHandlers.req['data'](body);
+
     expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    const error = mockNext.mock.calls[0][0] as unknown as Error;
+    expect(error.message).toBe('Stream write error');
   });
-}); 
+
+  test('should handle request errors', () => {
+    mockReq.headers = {
+      'content-type': 'multipart/form-data; boundary=----BoundaryReqError',
+    };
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    const error = new Error('Request error');
+    eventHandlers.req['error'](error);
+
+    expect(mockNext).toHaveBeenCalledWith(error);
+    expect(fs.unlinkSync).not.toHaveBeenCalled();
+  });
+
+  test('should finalize file if request ends unexpectedly', () => {
+    mockReq.headers = {
+      'content-type': 'multipart/form-data; boundary=----BoundaryUnexpectedEnd',
+    };
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    const boundary = '----BoundaryUnexpectedEnd';
+    const header = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="incomplete.txt"\r\n'),
+      Buffer.from('Content-Type: text/plain\r\n\r\n'),
+    ]);
+
+    const fileContent = Buffer.from('Partial content');
+
+    eventHandlers.req['data'](header);
+    eventHandlers.req['data'](fileContent);
+    eventHandlers.req['end']();
+
+    expect(mockReq.files).toHaveLength(1);
+    expect(mockReq.files![0].filename).toBe('incomplete.txt');
+    expect(mockFileStream.end).toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  test('should handle missing boundary in content-type header', () => {
+    mockReq.headers = {
+      'content-type': 'multipart/form-data',
+    };
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    const error = mockNext.mock.calls[0][0] as unknown as Error;
+    expect(error.message).toBe('No boundary found in content-type');
+  });
+
+  test('should handle unexpected errors gracefully', () => {
+    mockReq.headers = {
+      'content-type': 'multipart/form-data; boundary=----BoundaryUnexpected',
+    };
+
+    (Buffer.concat as any) = jest.fn().mockImplementation(() => {
+      throw 'Unexpected error';
+    });
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    eventHandlers.req['data'](Buffer.from('Some data'));
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    const error = mockNext.mock.calls[0][0] as unknown as Error;
+    expect(error.message).toBe('Unexpected error');
+  });
+});

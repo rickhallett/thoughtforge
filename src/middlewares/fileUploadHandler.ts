@@ -126,7 +126,7 @@ function handleChunk(
       state.isReadingHeader = true;
     }
   } catch (error) {
-    next(error);
+    next(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -168,15 +168,38 @@ function createNewFileUpload(
     state.currentFile = {
       fieldName: fileInfo.fieldName,
       filename: fileInfo.filename,
-      path: path.join(UPLOAD_DIR, `${Date.now()}-${fileInfo.filename}`)
+      path: path.join(UPLOAD_DIR, `${Date.now()}-${fileInfo.filename}`),
     };
 
     state.fileStream = fs.createWriteStream(state.currentFile.path);
+
+    // **Add error handler to fileStream**
+    state.fileStream.on('error', (err: Error) => {
+      handleFileStreamError(state, err, next);
+    });
   } catch (error) {
     state.currentFile = null;
     state.fileStream = null;
-    next(error);
+    next(error instanceof Error ? error : new Error(String(error)));
   }
+}
+
+function handleFileStreamError(
+  state: FileUploadState,
+  err: Error,
+  next: NextFunction
+): void {
+  if (state.fileStream) {
+    state.fileStream.end();
+  }
+  if (state.currentFile) {
+    fs.unlink(state.currentFile.path, () => {
+      // Ignore errors during unlink
+    });
+  }
+  state.currentFile = null;
+  state.fileStream = null;
+  next(err);
 }
 
 function ensureUploadDirectoryExists(): void {
@@ -211,7 +234,7 @@ function handleError(
 ): void {
   if (state.fileStream && state.currentFile) {
     state.fileStream.end();
-    fs.unlinkSync(state.currentFile.path);
+    fs.unlink(state.currentFile.path, () => { });
   }
   next(err);
 }
