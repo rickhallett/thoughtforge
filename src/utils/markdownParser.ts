@@ -9,70 +9,112 @@ interface MarkdownDocument {
   meta: MarkdownMeta;
 }
 
-export function parseMarkdown(markdown: string): MarkdownDocument {
-  const lines = markdown.split('\n');
-  let title = '';
-  let content = '';
-  const meta: MarkdownMeta = {
-    tags: [],
-    lastUpdated: new Date().toISOString()
-  };
+// Parser Strategies
+interface LineParserStrategy {
+  canParse(line: string): boolean;
+  parse(line: string, builder: MarkdownBuilder): void;
+}
 
-  let currentSection: 'title' | 'content' | null = null;
-  let contentBuffer: string[] = [];
+class TitleParser implements LineParserStrategy {
+  canParse(line: string): boolean {
+    return line.startsWith('# ');
+  }
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  parse(line: string, builder: MarkdownBuilder): void {
+    builder.setTitle(line.replace('# ', ''));
+  }
+}
 
-    // Parse tags if line starts with "tags:"
-    if (line.toLowerCase().startsWith('tags:')) {
-      const tagsString = line.substring(5).trim();
-      meta.tags = tagsString
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
-      continue;
-    }
+class TagsParser implements LineParserStrategy {
+  canParse(line: string): boolean {
+    return line.toLowerCase().startsWith('tags:');
+  }
 
-    // Parse H1 title
-    if (line.startsWith('# ')) {
-      title = line.replace('# ', '');
-      continue;
-    }
+  parse(line: string, builder: MarkdownBuilder): void {
+    const tagsString = line.substring(5).trim();
+    const tags = tagsString
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+    builder.setTags(tags);
+  }
+}
 
-    // Parse H2 sections
+class ContentSectionParser implements LineParserStrategy {
+  private isInContentSection = false;
+
+  canParse(line: string): boolean {
     if (line.startsWith('## ')) {
-      // Save previous section if exists
-      if (currentSection === 'content') {
-        content = contentBuffer.join('\n').trim();
-      }
-
-      // Start new section
-      contentBuffer = [];
-      const sectionName = line.replace('## ', '').toLowerCase();
-      
-      if (sectionName === 'content') {
-        currentSection = 'content';
-      } else {
-        currentSection = null;
-      }
-      continue;
+      this.isInContentSection = line.replace('## ', '').toLowerCase() === 'content';
+      return true;
     }
-
-    // Add line to current section buffer
-    if (currentSection) {
-      contentBuffer.push(line);
-    }
+    return this.isInContentSection;
   }
 
-  // Save last section if exists
-  if (currentSection === 'content') {
-    content = contentBuffer.join('\n').trim();
+  parse(line: string, builder: MarkdownBuilder): void {
+    if (!line.startsWith('## ')) {
+      builder.appendContent(line);
+    }
   }
+}
 
-  return {
-    title,
-    content,
-    meta
+// Builder
+class MarkdownBuilder {
+  private document: MarkdownDocument = {
+    title: '',
+    content: '',
+    meta: {
+      tags: [],
+      lastUpdated: new Date().toISOString()
+    }
   };
+
+  private contentLines: string[] = [];
+
+  setTitle(title: string): void {
+    this.document.title = title;
+  }
+
+  setTags(tags: string[]): void {
+    this.document.meta.tags = tags;
+  }
+
+  appendContent(line: string): void {
+    this.contentLines.push(line);
+  }
+
+  build(): MarkdownDocument {
+    this.document.content = this.contentLines.join('\n').trim();
+    return { ...this.document };
+  }
+}
+
+// Main Parser
+export class MarkdownParser {
+  private strategies: LineParserStrategy[];
+
+  constructor() {
+    this.strategies = [
+      new TitleParser(),
+      new TagsParser(),
+      new ContentSectionParser()
+    ];
+  }
+
+  parseMarkdown(markdown: string): MarkdownDocument {
+    const builder = new MarkdownBuilder();
+    const lines = markdown.split('\n');
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      for (const strategy of this.strategies) {
+        if (strategy.canParse(trimmedLine)) {
+          strategy.parse(trimmedLine, builder);
+          break;
+        }
+      }
+    }
+
+    return builder.build();
+  }
 }
