@@ -126,7 +126,7 @@ describe('handleFileUpload Middleware', () => {
     expect(mockReq.files).toHaveLength(0);
   });
 
-  test.only('should handle errors during file writing', () => {
+  test('should handle errors during file writing', () => {
     mockFileStream.write.mockImplementation(() => {
       throw new Error('Stream write error');
     });

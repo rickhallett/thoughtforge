@@ -21,7 +21,7 @@ interface FileUploadState {
   isReadingHeader: boolean;
 }
 
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
 export const handleFileUpload = (
   req: FileUploadRequest,
