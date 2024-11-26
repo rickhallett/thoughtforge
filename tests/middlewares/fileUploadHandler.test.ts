@@ -9,7 +9,7 @@ jest.mock('path');
 describe('handleFileUpload', () => {
   let mockReq: Partial<FileUploadRequest>;
   let mockRes: Partial<Response>;
-  let mockNext: NextFunction;
+  let mockNext: jest.MockedFunction<NextFunction>;
   let eventHandlers: { [key: string]: Function };
 
   beforeEach(() => {
@@ -242,9 +242,11 @@ describe('handleFileUpload', () => {
     );
 
     eventHandlers['data'](fileData);
-    eventHandlers['error'](new Error('Permission denied'));
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    const error = mockNext.mock.calls[0][0] as unknown as Error;
+    expect(error.message).toBe('Permission denied');
+    expect(mockReq.files?.length).toBe(0);
   });
 
   it('should handle write stream errors', () => {
