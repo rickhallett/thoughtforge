@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { handleFileUpload, FileUploadRequest } from '../../src/middlewares/fileUploadHandler';
 import fs from 'fs';
-import path from 'path';
 
 jest.mock('fs');
 jest.mock('path');
