@@ -1,31 +1,48 @@
-interface MarkdownMeta {
+// Interfaces
+export interface MarkdownMeta {
   tags?: string[];
   lastUpdated?: string; // ISO format
+  author?: string;
+  timeToRead?: number;
 }
 
-interface MarkdownDocument {
+export interface MarkdownDocument {
   title: string;
   content: string;
   meta: MarkdownMeta;
 }
 
-// Parser Strategies
-interface LineParserStrategy {
+export interface LineParserStrategy {
   canParse(line: string): boolean;
   parse(line: string, builder: MarkdownBuilder): void;
 }
 
-class TitleParser implements LineParserStrategy {
+export interface ParserConfig {
+  strategies?: LineParserStrategy[];
+  defaultMeta?: Partial<MarkdownMeta>;
+  preProcessHooks?: PreProcessHook[];
+  postProcessHooks?: PostProcessHook[];
+}
+
+// Types
+export type PreProcessHook = (markdown: string) => string;
+export type PostProcessHook = (document: MarkdownDocument) => MarkdownDocument;
+
+// Classes
+export class TitleParser implements LineParserStrategy {
   canParse(line: string): boolean {
-    return line.startsWith('# ');
+    // Must start with '# ' and have non-whitespace content after the space
+    const trimmed = line.trim();
+    return trimmed.startsWith('# ') && trimmed.length > 2 && /^#\s+\S/.test(line);
   }
 
   parse(line: string, builder: MarkdownBuilder): void {
-    builder.setTitle(line.replace('# ', ''));
+    const title = line.replace(/^#\s+/, '').trim();
+    builder.setTitle(title);
   }
 }
 
-class TagsParser implements LineParserStrategy {
+export class TagsParser implements LineParserStrategy {
   canParse(line: string): boolean {
     return line.toLowerCase().startsWith('tags:');
   }
@@ -40,27 +57,39 @@ class TagsParser implements LineParserStrategy {
   }
 }
 
-class ContentSectionParser implements LineParserStrategy {
-  private isInContentSection = false;
+export class ContentSectionParser implements LineParserStrategy {
+  public isInContentSection = false;
 
   canParse(line: string): boolean {
-    if (line.startsWith('## ')) {
-      this.isInContentSection = line.replace('## ', '').toLowerCase() === 'content';
+    const trimmedLine = line.trim();
+
+    const contentHeaderRegex = /^## content[ \t]*$/i;
+    const sectionHeaderRegex = /^## (?!content\b).+/i;
+
+    if (contentHeaderRegex.test(trimmedLine)) {
+      // Enter the content section
+      this.isInContentSection = true;
       return true;
+    } else if (sectionHeaderRegex.test(trimmedLine)) {
+      // Another '##' header that is not '## content'; exit content section
+      this.isInContentSection = false;
+      return false;
     }
+
+    // Remain in current state (inside or outside the content section)
     return this.isInContentSection;
   }
 
   parse(line: string, builder: MarkdownBuilder): void {
-    if (!line.startsWith('## ')) {
+    if (this.isInContentSection) {
       builder.appendContent(line);
     }
   }
 }
 
-// Builder
-class MarkdownBuilder {
+export class MarkdownBuilder {
   private document: MarkdownDocument;
+  private contentLines: string[] = [];
 
   constructor(defaultMeta: Partial<MarkdownMeta> = {}) {
     this.document = {
@@ -74,8 +103,6 @@ class MarkdownBuilder {
     };
   }
 
-  private contentLines: string[] = [];
-
   setTitle(title: string): void {
     this.document.title = title;
   }
@@ -85,7 +112,7 @@ class MarkdownBuilder {
   }
 
   appendContent(line: string): void {
-    this.contentLines.push(line);
+    this.contentLines.push(line.trim() === '' ? '' : line);
   }
 
   build(): MarkdownDocument {
@@ -94,19 +121,6 @@ class MarkdownBuilder {
   }
 }
 
-// Hook types
-type PreProcessHook = (markdown: string) => string;
-type PostProcessHook = (document: MarkdownDocument) => MarkdownDocument;
-
-// Updated config interface
-interface ParserConfig {
-  strategies?: LineParserStrategy[];
-  defaultMeta?: Partial<MarkdownMeta>;
-  preProcessHooks?: PreProcessHook[];
-  postProcessHooks?: PostProcessHook[];
-}
-
-// Main Parser
 export class MarkdownParser {
   private strategies: LineParserStrategy[];
   private preProcessHooks: PreProcessHook[];
@@ -120,8 +134,8 @@ export class MarkdownParser {
       new TagsParser(),
       new ContentSectionParser()
     ];
-    this.preProcessHooks = config.preProcessHooks || [];
-    this.postProcessHooks = config.postProcessHooks || [];
+    this.preProcessHooks = config.preProcessHooks || [normalizeLineEndings, removeExtraWhitespace, convertTabsToSpaces, normalizeHeaders];
+    this.postProcessHooks = config.postProcessHooks || [validateRequiredFields, addTimeToRead];
   }
 
   parseMarkdown(markdown: string): MarkdownDocument {
@@ -135,14 +149,28 @@ export class MarkdownParser {
     const builder = new MarkdownBuilder(this.config.defaultMeta);
     const lines = processedMarkdown.split('\n');
 
+    // get content parser
+    const contentParser = this.strategies.find(strategy => strategy instanceof ContentSectionParser);
+
     for (const line of lines) {
-      const trimmedLine = line.trim();
-      for (const strategy of this.strategies) {
-        if (strategy.canParse(trimmedLine)) {
-          strategy.parse(trimmedLine, builder);
-          break;
+      // If we are inside the content section, give priority to the content parser
+      if (contentParser && contentParser.canParse(line)) {
+        contentParser.parse(line, builder);
+        continue; // Move to the next line
+      } else {
+        // Check if we need to exit the content section
+        // The content parser's canParse method handles state transitions
+      }
+
+      // Outside content section, try other parsers
+      for (const parser of this.strategies) {
+        if (parser !== contentParser && parser.canParse(line)) {
+          parser.parse(line, builder);
+          break; // Move to the next line after parsing
         }
       }
+
+
     }
 
     // Apply post-process hooks
@@ -153,5 +181,52 @@ export class MarkdownParser {
     );
 
     return document;
+
+
   }
 }
+
+
+// Pre-process hooks
+export const normalizeLineEndings: PreProcessHook = (markdown: string) => {
+  return markdown.replace(/\r\n/g, '\n');
+};
+
+export const removeExtraWhitespace: PreProcessHook = (markdown: string) => {
+  return markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+};
+
+export const convertTabsToSpaces: PreProcessHook = (markdown: string) => {
+  return markdown.replace(/\t/g, '    ');
+};
+
+export const normalizeHeaders: PreProcessHook = (markdown: string) => {
+  // This regex matches headers from # to ###### that are missing a space
+  // between the hashes and the header text and inserts the space.
+  return markdown.replace(/^(\#{1,6})([^\s#])/gm, '$1 $2');
+};
+
+// Post-process hooks
+export const validateRequiredFields: PostProcessHook = (doc: MarkdownDocument) => {
+  if (!doc.title) {
+    throw new Error('Document must have a title');
+  }
+  if (!doc.content) {
+    throw new Error('Document must have content');
+  }
+  return doc;
+};
+
+export const addTimeToRead: PostProcessHook = (doc: MarkdownDocument) => {
+  const wordsPerMinute = 200;
+  const wordCount = doc.content.split(/\s+/).length;
+  const timeToRead = Math.ceil(wordCount / wordsPerMinute);
+
+  return {
+    ...doc,
+    meta: {
+      ...doc.meta,
+      timeToRead: timeToRead
+    }
+  };
+};
