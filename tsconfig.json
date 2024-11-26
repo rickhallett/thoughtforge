@@ -3,7 +3,7 @@
     "target": "ES2019",
     "module": "commonjs",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "types": [
@@ -19,8 +19,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "prisma/seed.ts"
-, "tests/middlewares/fileUploadHandler.test.ts"  ],
+    "tests/middlewares/fileUploadHandler.test.ts",
+  ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts"
