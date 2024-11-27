@@ -23,8 +23,6 @@ interface FileUploadState {
 }
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-const RAW_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'raw');
-
 
 
 export const handleFileUpload = (
@@ -80,10 +78,14 @@ function setupEventHandlers(
     handleChunk(chunk, state, next);
   });
 
-  req.on('end', () => {
+  req.on('end', async () => {
     try {
-      // Store the raw body before parsing and get the path
-      storeRawBody(state.rawBody);
+      // Store the raw body in the database
+      await req.prisma.uploadRawBody.create({
+        data: {
+          content: state.rawBody.toString(),
+        }
+      });
       handleEnd(req, state, next);
     } catch (error) {
       next(error instanceof Error ? error : new Error(String(error)));
@@ -257,8 +259,3 @@ function handleError(
   next(err);
 }
 
-function storeRawBody(rawBody: Buffer): string {
-  const rawBodyPath = path.join(RAW_UPLOAD_DIR, `raw-${Date.now()}.txt`);
-  fs.writeFileSync(rawBodyPath, rawBody.toString());
-  return rawBodyPath;
-}
