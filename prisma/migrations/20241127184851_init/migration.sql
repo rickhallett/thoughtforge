@@ -14,14 +14,25 @@ CREATE TYPE "DestinationType" AS ENUM ('BLOG', 'SOCIAL_MEDIA', 'NEWSLETTER', 'OT
 CREATE TYPE "LogLevel" AS ENUM ('INFO', 'WARN', 'ERROR');
 
 -- CreateTable
+CREATE TABLE "_index_config" (
+    "name" TEXT NOT NULL,
+    "lastUpdateTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "_index_config_pkey" PRIMARY KEY ("name")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
     "role" "UserRole" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "isArchived" BOOLEAN NOT NULL DEFAULT false,
+    "version" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -29,14 +40,16 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "OriginalSource" (
     "id" TEXT NOT NULL,
-    "sourceType" TEXT NOT NULL,
-    "title" TEXT,
+    "sourceType" VARCHAR(50) NOT NULL,
+    "title" VARCHAR(255),
     "content" TEXT NOT NULL,
     "focusPoints" TEXT,
     "tags" TEXT[],
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "queryParams" JSONB NOT NULL,
     "metadata" JSONB NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "version" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "OriginalSource_pkey" PRIMARY KEY ("id")
 );
@@ -50,6 +63,9 @@ CREATE TABLE "Content" (
     "metadata" JSONB NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "isArchived" BOOLEAN NOT NULL DEFAULT false,
     "approverId" TEXT,
 
     CONSTRAINT "Content_pkey" PRIMARY KEY ("id")
@@ -64,6 +80,7 @@ CREATE TABLE "ProcessingLog" (
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "completedAt" TIMESTAMP(3),
     "details" JSONB NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "ProcessingLog_pkey" PRIMARY KEY ("id")
 );
@@ -116,6 +133,15 @@ CREATE TABLE "ErrorLog" (
 );
 
 -- CreateTable
+CREATE TABLE "UploadRawBody" (
+    "id" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UploadRawBody_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Tag" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -135,6 +161,54 @@ CREATE TABLE "ContentTag" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_email_idx" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_role_idx" ON "User"("role");
+
+-- CreateIndex
+CREATE INDEX "User_deletedAt_idx" ON "User"("deletedAt");
+
+-- CreateIndex
+CREATE INDEX "OriginalSource_sourceType_idx" ON "OriginalSource"("sourceType");
+
+-- CreateIndex
+CREATE INDEX "OriginalSource_submittedAt_idx" ON "OriginalSource"("submittedAt");
+
+-- CreateIndex
+CREATE INDEX "OriginalSource_deletedAt_idx" ON "OriginalSource"("deletedAt");
+
+-- CreateIndex
+CREATE INDEX "Content_currentStatus_idx" ON "Content"("currentStatus");
+
+-- CreateIndex
+CREATE INDEX "Content_createdAt_idx" ON "Content"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "Content_deletedAt_idx" ON "Content"("deletedAt");
+
+-- CreateIndex
+CREATE INDEX "Content_originalSourceId_idx" ON "Content"("originalSourceId");
+
+-- CreateIndex
+CREATE INDEX "Content_approverId_idx" ON "Content"("approverId");
+
+-- CreateIndex
+CREATE INDEX "ProcessingLog_contentId_idx" ON "ProcessingLog"("contentId");
+
+-- CreateIndex
+CREATE INDEX "ProcessingLog_stage_idx" ON "ProcessingLog"("stage");
+
+-- CreateIndex
+CREATE INDEX "ProcessingLog_status_idx" ON "ProcessingLog"("status");
+
+-- CreateIndex
+CREATE INDEX "ProcessingLog_startedAt_idx" ON "ProcessingLog"("startedAt");
+
+-- CreateIndex
+CREATE INDEX "UploadRawBody_uploadedAt_idx" ON "UploadRawBody"("uploadedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Tag_name_key" ON "Tag"("name");

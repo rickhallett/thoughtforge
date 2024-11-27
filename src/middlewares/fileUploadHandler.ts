@@ -56,12 +56,12 @@ function extractBoundary(req: Request): string | undefined {
 function initializeState(boundary: string): FileUploadState {
   return {
     buffer: Buffer.alloc(0),
-    boundaryBuffer: Buffer.from(`\r\n--${boundary}`),
+    boundaryBuffer: Buffer.from(`--${boundary}`),
     files: [],
     currentFile: null,
     fileStream: null,
     isReadingHeader: true,
-    rawBody: Buffer.alloc(0) // Initialize rawBody
+    rawBody: Buffer.alloc(0)
   };
 }
 
@@ -73,25 +73,29 @@ function setupEventHandlers(
   req.files = state.files;
 
   req.on('data', (chunk: Buffer) => {
-    // Accumulate raw data
     state.rawBody = Buffer.concat([state.rawBody, chunk]);
     handleChunk(chunk, state, next);
   });
 
   req.on('end', async () => {
     try {
-      // Store the raw body in the database
+
+
       await req.prisma.uploadRawBody.create({
         data: {
           content: state.rawBody.toString(),
         }
       });
+
       handleEnd(req, state, next);
     } catch (error) {
       next(error instanceof Error ? error : new Error(String(error)));
     }
   });
-  req.on('error', (err) => handleError(state, err, next));
+
+  req.on('error', (err) => {
+    handleError(state, err, next);
+  });
 }
 
 function handleChunk(
@@ -135,7 +139,11 @@ function handleChunk(
 
       // Write the remaining data before boundary
       if (state.fileStream && boundaryPos > 0) {
-        state.fileStream.write(state.buffer.slice(0, boundaryPos));
+        let dataToWrite = state.buffer.slice(0, boundaryPos);
+        if (dataToWrite.slice(-2).equals(Buffer.from('\r\n'))) {
+          dataToWrite = dataToWrite.slice(0, -2);
+        }
+        state.fileStream.write(dataToWrite);
       }
 
       // Finish current file
@@ -193,7 +201,6 @@ function createNewFileUpload(
 
     state.fileStream = fs.createWriteStream(state.currentFile.path);
 
-    // **Add error handler to fileStream**
     state.fileStream.on('error', (err: Error) => {
       handleFileStreamError(state, err, next);
     });
@@ -242,6 +249,7 @@ function handleEnd(
   state: FileUploadState,
   next: NextFunction
 ): void {
+  console.log('handle end')
   finishCurrentFile(state);
   req.files = state.files;
   next();
