@@ -198,6 +198,14 @@ model ErrorLog {
   publishingQueue PublishingQueue? @relation(fields: [publishingQueueId], references: [id])
 }
 
+model UploadRawBody {
+  id         String   @id @default(uuid())
+  content    String   @db.Text
+  uploadedAt DateTime @default(now())
+  
+  @@index([uploadedAt])
+}
+
 model Tag {
   id        String   @id @default(uuid())
   name      String   @unique
