@@ -1,5 +1,5 @@
 -- Create user and grant privileges
-DO
+DO LANGUAGE plpgsql
 $$
 BEGIN
    IF NOT EXISTS (
@@ -14,7 +14,7 @@ END
 $$;
 
 -- Grant database privileges
-DO
+DO LANGUAGE plpgsql
 $$
 BEGIN
    GRANT ALL PRIVILEGES ON DATABASE mydb TO oceanheart;
