@@ -13,6 +13,9 @@ app.use(express.json());
 
 app.use(requestLogger);
 
+// Middleware to capture raw data
+// app.use(captureRawBody());
+
 // TODO: check dest folder if upload already exists
 app.use(handleFileUpload);
 
@@ -39,3 +42,5 @@ process.on('SIGTERM', async () => {
 });
 
 export default app;
+
+

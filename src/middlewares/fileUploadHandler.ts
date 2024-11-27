@@ -19,10 +19,11 @@ interface FileUploadState {
   currentFile: UploadedFile | null;
   fileStream: fs.WriteStream | null;
   isReadingHeader: boolean;
+  rawBody: Buffer;
 }
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-const RAW_UPLOAD_DIR = process.cwd();
+const RAW_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'raw');
 
 
 

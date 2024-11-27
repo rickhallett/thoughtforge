@@ -8,3 +8,5 @@ logs/
 .DS_Store
 .aider*
 .env
+pyforge/lib/python3.9/site-packages
+
