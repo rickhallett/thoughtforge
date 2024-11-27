@@ -52,6 +52,7 @@ describe('handleFileUpload Middleware', () => {
     };
     (fs.createWriteStream as jest.Mock).mockReturnValue(mockFileStream);
     (fs.unlink as unknown as jest.Mock).mockImplementation(() => { });
+    bufferConcatSpy.mockRestore();
   });
 
   afterEach(() => {
@@ -210,8 +211,8 @@ describe('handleFileUpload Middleware', () => {
       'content-type': 'multipart/form-data; boundary=----BoundaryUnexpected',
     };
 
-    (Buffer.concat as any) = jest.fn().mockImplementation(() => {
-      throw 'Unexpected error';
+    const bufferConcatSpy = jest.spyOn(Buffer, 'concat').mockImplementation(() => {
+      throw new Error('Unexpected error');
     });
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
