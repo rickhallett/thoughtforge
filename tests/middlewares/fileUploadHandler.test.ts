@@ -52,7 +52,7 @@ describe('handleFileUpload Middleware', () => {
     };
     (fs.createWriteStream as jest.Mock).mockReturnValue(mockFileStream);
     (fs.unlink as unknown as jest.Mock).mockImplementation(() => { });
-    bufferConcatSpy.mockRestore();
+    // bufferConcatSpy.mockRestore();
   });
 
   afterEach(() => {
@@ -211,13 +211,24 @@ describe('handleFileUpload Middleware', () => {
       'content-type': 'multipart/form-data; boundary=----BoundaryUnexpected',
     };
 
-    const bufferConcatSpy = jest.spyOn(Buffer, 'concat').mockImplementation(() => {
+    // Make fs.createWriteStream throw an error                                                                                                                                 
+    (fs.createWriteStream as jest.Mock).mockImplementation(() => {
       throw new Error('Unexpected error');
     });
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
 
-    eventHandlers.req['data'](Buffer.from('Some data'));
+    const boundary = '----BoundaryUnexpected';
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'),
+      Buffer.from('Content-Type: text/plain\r\n\r\n'),
+      Buffer.from('test content'),
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+
+    eventHandlers.req['data'](body);
+
     expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     const error = mockNext.mock.calls[0][0] as unknown as Error;
     expect(error.message).toBe('Unexpected error');

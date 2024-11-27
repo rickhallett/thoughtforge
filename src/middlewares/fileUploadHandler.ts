@@ -83,8 +83,7 @@ function setupEventHandlers(
   req.on('end', () => {
     try {
       // Store the raw body before parsing and get the path
-      const rawBodyPath = storeRawBody(state.rawBody);
-      console.log(`Raw body stored at: ${rawBodyPath}`);
+      storeRawBody(state.rawBody);
       handleEnd(req, state, next);
     } catch (error) {
       next(error instanceof Error ? error : new Error(String(error)));
@@ -259,7 +258,8 @@ function handleError(
 }
 
 function storeRawBody(rawBody: Buffer): string {
-  const rawBodyPath = path.join(RAW_UPLOAD_DIR, `raw-${Date.now()}.bin`);
-  fs.writeFileSync(rawBodyPath, rawBody);
+  const rawBodyPath = path.join(RAW_UPLOAD_DIR, `raw-${Date.now()}.txt`);
+  console.log(`Storing raw body at: ${rawBodyPath}`);
+  fs.writeFileSync(rawBodyPath, rawBody.toString());
   return rawBodyPath;
 }
