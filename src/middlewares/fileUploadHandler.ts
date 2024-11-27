@@ -6,6 +6,7 @@ export interface UploadedFile {
   fieldName: string;
   filename: string;
   path: string;
+  rawBody: Buffer; // New property to store the raw body
 }
 
 export interface FileUploadRequest extends Request {
@@ -60,7 +61,8 @@ function initializeState(boundary: string): FileUploadState {
     files: [],
     currentFile: null,
     fileStream: null,
-    isReadingHeader: true
+    isReadingHeader: true,
+    rawBody: Buffer.alloc(0) // Initialize rawBody
   };
 }
 
@@ -71,8 +73,17 @@ function setupEventHandlers(
 ): void {
   req.files = state.files;
 
-  req.on('data', (chunk: Buffer) => handleChunk(chunk, state, next));
-  req.on('end', () => handleEnd(req, state, next));
+  req.on('data', (chunk: Buffer) => {
+    // Accumulate raw data
+    state.rawBody = Buffer.concat([state.rawBody, chunk]);
+    handleChunk(chunk, state, next);
+  });
+
+  req.on('end', () => {
+    // Store the raw body before parsing
+    storeRawBody(state.rawBody);
+    handleEnd(req, state, next);
+  });
   req.on('error', (err) => handleError(state, err, next));
 }
 
@@ -241,3 +252,8 @@ function handleError(
   next(err);
 }
 
+function storeRawBody(rawBody: Buffer): void {
+  const rawBodyPath = path.join(UPLOAD_DIR, `raw-${Date.now()}.bin`);
+  fs.writeFileSync(rawBodyPath, rawBody);
+  console.log(`Raw body stored at: ${rawBodyPath}`);
+}
