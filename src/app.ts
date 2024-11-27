@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use(requestLogger);
 
+// TODO: check dest folder if upload already exists
 app.use(handleFileUpload);
 
 app.use((req: Request, res: Response, next: NextFunction) => {

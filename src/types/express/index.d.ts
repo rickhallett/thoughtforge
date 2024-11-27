@@ -4,8 +4,9 @@ declare global {
   namespace Express {
     interface Request {
       prisma: PrismaClient;
+      rawBody: Buffer[];
     }
   }
 }
 
-export {};
+export { };
