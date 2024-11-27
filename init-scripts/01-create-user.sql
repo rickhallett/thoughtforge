@@ -13,6 +13,22 @@ BEGIN
 END
 $$;
 
+-- Create dblink extension
+CREATE EXTENSION IF NOT EXISTS dblink;
+
+-- Create database if it does not exist
+DO LANGUAGE plpgsql
+$$
+BEGIN
+   IF NOT EXISTS (
+      SELECT FROM pg_database
+      WHERE datname = 'thoughtforge') THEN
+
+      PERFORM dblink_exec('dbname=postgres', 'CREATE DATABASE thoughtforge');
+   END IF;
+END
+$$;
+
 -- Grant database privileges
 DO LANGUAGE plpgsql
 $$
