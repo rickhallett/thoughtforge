@@ -1,16 +1,27 @@
 -- Create user and grant privileges
 DO
-$do$
+$$
 BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_roles
       WHERE  rolname = 'oceanheart') THEN
 
-      CREATE USER oceanheart WITH PASSWORD 'admin';
+      CREATE USER oceanheart WITH PASSWORD 'admin' SUPERUSER;
+   ELSE
+      ALTER USER oceanheart WITH SUPERUSER;
    END IF;
 END
-$do$;
+$$;
 
-ALTER USER oceanheart WITH SUPERUSER;
-GRANT ALL PRIVILEGES ON DATABASE mydb TO oceanheart;
-GRANT ALL PRIVILEGES ON SCHEMA public TO oceanheart;
+-- Grant database privileges
+DO
+$$
+BEGIN
+   GRANT ALL PRIVILEGES ON DATABASE mydb TO oceanheart;
+   GRANT ALL PRIVILEGES ON SCHEMA public TO oceanheart;
+EXCEPTION
+   WHEN undefined_object THEN
+      -- Handle case where database doesn't exist yet
+      NULL;
+END
+$$;
