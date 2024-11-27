@@ -17,6 +17,9 @@
 		"test:unit": "jest --testPathPattern=tests/controllers",
 		"test:integration": "jest --testPathPattern=tests/integration",
 		"test:coverage": "jest --coverage",
+		"test:processors": "jest tests/pipelines/processors",
+		"test:pipeline": "jest tests/pipelines/integration", 
+		"test:all": "jest tests/pipelines",
 		"lint": "eslint . --ext .ts",
 		"format": "prettier --write \"src/**/*.ts\"",
 		"seed": "ts-node prisma/seed.ts"
