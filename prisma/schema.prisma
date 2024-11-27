@@ -61,7 +61,7 @@ model User {
   id        String    @id @default(uuid())
   name      String    @db.VarChar(100)
   email     String    @unique @db.VarChar(255)
-  password  String    @comment("Stored as hashed value")
+  password  String    @db.VarChar(255) // Stored as hashed value
   role      UserRole
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
