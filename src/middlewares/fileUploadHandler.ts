@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { prisma } from '../prisma';
 import fs from 'fs';
 import path from 'path';
 
@@ -79,9 +80,7 @@ function setupEventHandlers(
 
   req.on('end', async () => {
     try {
-
-
-      await req.prisma.uploadRawBody.create({
+      await prisma.uploadRawBody.create({
         data: {
           content: state.rawBody.toString(),
         }
