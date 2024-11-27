@@ -14,7 +14,7 @@ datasource db {
 model IndexConfig {
   name           String   @id
   lastUpdateTime DateTime @default(now())
-  
+
   @@map("_index_config")
 }
 
@@ -58,16 +58,16 @@ enum LogLevel {
 
 // Models
 model User {
-  id        String    @id @default(uuid())
-  name      String    @db.VarChar(100)
-  email     String    @unique @db.VarChar(255)
-  password  String    @db.VarChar(255) // Stored as hashed value
-  role      UserRole
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  isArchived Boolean  @default(false)
-  version   Int       @default(1)
+  id         String    @id @default(uuid())
+  name       String    @db.VarChar(100)
+  email      String    @unique @db.VarChar(255)
+  password   String    @db.VarChar(255) // Stored as hashed value
+  role       UserRole
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  isArchived Boolean   @default(false)
+  version    Int       @default(1)
 
   // Relations
   approvals Content[] @relation("ApproverContents")
@@ -83,7 +83,7 @@ model OriginalSource {
   title       String?   @db.VarChar(255)
   content     String    @db.Text
   focusPoints String?   @db.Text // Stored as JSON string or separate model if needed
-  tags        String[] 
+  tags        String[]
   submittedAt DateTime  @default(now())
   queryParams Json      @db.JsonB // Stores optional query parameters
   metadata    Json      @db.JsonB // Additional metadata if needed
@@ -91,7 +91,7 @@ model OriginalSource {
   version     Int       @default(1)
 
   // Relations
-  contents    Content[]
+  contents Content[]
 
   @@index([sourceType])
   @@index([submittedAt])
@@ -107,8 +107,8 @@ model Content {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   deletedAt        DateTime?
-  version          Int          @default(1)
-  isArchived       Boolean      @default(false)
+  version          Int           @default(1)
+  isArchived       Boolean       @default(false)
 
   // Relations
   originalSource   OriginalSource    @relation(fields: [originalSourceId], references: [id])
@@ -133,8 +133,8 @@ model ProcessingLog {
   status      ContentStatus   @default(PROCESSING)
   startedAt   DateTime        @default(now())
   completedAt DateTime?
-  details     Json           @db.JsonB // Any details or outputs from the processing stage
-  version     Int           @default(1)
+  details     Json            @db.JsonB // Any details or outputs from the processing stage
+  version     Int             @default(1)
 
   // Relations
   content   Content    @relation(fields: [contentId], references: [id])

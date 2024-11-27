@@ -17,7 +17,7 @@ $$;
 DO LANGUAGE plpgsql
 $$
 BEGIN
-   GRANT ALL PRIVILEGES ON DATABASE mydb TO oceanheart;
+   GRANT ALL PRIVILEGES ON DATABASE thoughtforge TO oceanheart;
    GRANT ALL PRIVILEGES ON SCHEMA public TO oceanheart;
 EXCEPTION
    WHEN undefined_object THEN

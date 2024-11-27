@@ -259,7 +259,6 @@ function handleError(
 
 function storeRawBody(rawBody: Buffer): string {
   const rawBodyPath = path.join(RAW_UPLOAD_DIR, `raw-${Date.now()}.txt`);
-  console.log(`Storing raw body at: ${rawBodyPath}`);
   fs.writeFileSync(rawBodyPath, rawBody.toString());
   return rawBodyPath;
 }
