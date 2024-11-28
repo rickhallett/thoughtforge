@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { handleFileUpload, FileUploadRequest } from '../../src/middlewares/fileUploadHandler';
+import { handleFileUpload } from '../../src/middlewares/fileUploadHandler';
+import { FileUploadRequest } from '@thoughtforge/shared/types/fileUpload';
 import fs from 'fs';
 import path from 'path';
 

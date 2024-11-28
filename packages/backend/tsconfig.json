@@ -1,32 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "ES2019",
-    "module": "commonjs",
-    "outDir": "dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "noImplicitAny": false,
-    "types": [
-      "express",
-      "jest",
-      "node"
-    ],
-    "typeRoots": [
-      "./src/types",
-      "./node_modules/@types",
-      "./node_modules/jest"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "tests/middlewares/fileUploadHandler.test.ts",
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
-  ]
-}{
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
@@ -34,9 +6,17 @@
     "baseUrl": "./src",
     "paths": {
       "@thoughtforge/shared/*": ["../../shared/src/*"]
-    }
+    },
+    "types": [
+      "express",
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
   "references": [
     { "path": "../shared" }
   ]

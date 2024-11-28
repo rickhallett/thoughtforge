@@ -1,27 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../prisma';
 import fs from 'fs';
 import path from 'path';
-
-export interface UploadedFile {
-  fieldName: string;
-  filename: string;
-  path: string;
-}
-
-export interface FileUploadRequest extends Request {
-  files?: UploadedFile[];
-}
-
-interface FileUploadState {
-  buffer: Buffer;
-  boundaryBuffer: Buffer;
-  files: UploadedFile[];
-  currentFile: UploadedFile | null;
-  fileStream: fs.WriteStream | null;
-  isReadingHeader: boolean;
-  rawBody: Buffer;
-}
+import { FileUploadRequest, FileUploadState } from '@thoughtforge/shared/types/fileUpload';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
