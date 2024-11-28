@@ -10,3 +10,4 @@ logs/
 .env
 pyforge/lib/python3.9/site-packages
 
+dump.rdb

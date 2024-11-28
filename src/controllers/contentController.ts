@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { ContentService } from '../services/contentService';
 import { FileUploadRequest } from '../middlewares/fileUploadHandler';
-import { logger } from '../utils/logger';
 
 export class ContentController {
   private contentService: ContentService;
@@ -34,3 +33,4 @@ export class ContentController {
     });
   }
 }
+
