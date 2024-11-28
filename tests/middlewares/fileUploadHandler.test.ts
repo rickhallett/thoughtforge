@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { handleFileUpload } from '@thoughtforge/backend/src/middlewares/fileUploadHandler';
 import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
+import { FileValidationError } from '@thoughtforge/shared/utils/fileValidation';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -68,7 +69,7 @@ describe('handleFileUpload Middleware', () => {
     expect(mockReq.files).toEqual([]);
   });
 
-  test.only('should process a single file upload correctly', async () => {
+  test.only('should process and validate a single file upload correctly', async () => {
     const boundary = 'WebKitFormBoundary123456789';
     mockReq.headers = {
       'content-type': `multipart/form-data; boundary=${boundary}`,
