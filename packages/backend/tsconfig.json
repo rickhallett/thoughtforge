@@ -26,4 +26,18 @@
     "node_modules",
     "**/*.spec.ts"
   ]
+}{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@thoughtforge/shared/*": ["../../shared/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../shared" }
+  ]
 }

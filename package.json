@@ -5,13 +5,15 @@
   ],
   "scripts": {
     "dev": "python scripts/dev/start_all.py",
-    "build": "python scripts/ci/build.py",
+    "build": "yarn workspace @thoughtforge/shared build && yarn workspace @thoughtforge/backend build",
     "test": "python scripts/ci/test.py",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "backend:dev": "yarn workspace @thoughtforge/backend dev",
     "backend:build": "yarn workspace @thoughtforge/backend build",
-    "backend:test": "yarn workspace @thoughtforge/backend test"
+    "backend:test": "yarn workspace @thoughtforge/backend test",
+    "shared:build": "yarn workspace @thoughtforge/shared build",
+    "shared:type-check": "yarn workspace @thoughtforge/shared type-check"
   },
   "devDependencies": {
     "eslint": "^9.15.0",
