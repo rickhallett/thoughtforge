@@ -5,6 +5,8 @@ export interface UploadedFile {
   fieldName: string;
   filename: string;
   path: string;
+  size: number;
+  mimeType: string;
 }
 
 export interface FileUploadRequest extends Request {

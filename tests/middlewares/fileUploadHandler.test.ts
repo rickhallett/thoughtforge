@@ -302,4 +302,74 @@ describe('handleFileUpload Middleware', () => {
     const error = mockNext.mock.calls[0][0] as unknown as Error;
     expect(error.message).toBe('Unexpected error');
   });
+  test('should reject files with invalid extensions', async () => {
+    const boundary = 'boundary123';
+    mockReq.headers = {
+      'content-type': `multipart/form-data; boundary=${boundary}`,
+    };
+
+    const nextCalled = new Promise<void>((resolve) => {
+      mockNext.mockImplementation(() => {
+        resolve();
+      });
+    });
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from('Content-Disposition: form-data; name="file"; filename="test.exe"\r\n'),
+      Buffer.from('Content-Type: application/octet-stream\r\n\r\n'),
+      Buffer.from('test content'),
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+
+    eventHandlers.req['data'](body);
+    eventHandlers.req['end']();
+
+    await nextCalled;
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(FileValidationError));
+    expect(mockNext.mock.calls[0][0].message).toContain('File type not allowed');
+  });
+
+  test('should enforce maximum file count', async () => {
+    const boundary = 'boundary123';
+    mockReq.headers = {
+      'content-type': `multipart/form-data; boundary=${boundary}`,
+    };
+
+    const nextCalled = new Promise<void>((resolve) => {
+      mockNext.mockImplementation(() => {
+        resolve();
+      });
+    });
+
+    // Create 11 files (exceeding the default max of 10)
+    const files = Array(11).fill(null).map((_, i) => ({
+      header: Buffer.concat([
+        Buffer.from(`--${boundary}\r\n`),
+        Buffer.from(`Content-Disposition: form-data; name="file${i}"; filename="test${i}.jpg"\r\n`),
+        Buffer.from('Content-Type: image/jpeg\r\n\r\n'),
+      ]),
+      content: Buffer.from('test content'),
+    }));
+
+    handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
+
+    // Send all files
+    for (const file of files) {
+      eventHandlers.req['data'](file.header);
+      eventHandlers.req['data'](file.content);
+      eventHandlers.req['data'](Buffer.from('\r\n'));
+    }
+    
+    eventHandlers.req['data'](Buffer.from(`--${boundary}--\r\n`));
+    eventHandlers.req['end']();
+
+    await nextCalled;
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(FileValidationError));
+    expect(mockNext.mock.calls[0][0].message).toContain('Maximum number of files');
+  });
 });

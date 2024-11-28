@@ -3,6 +3,13 @@ import { prisma } from '../prisma';
 import fs from 'fs';
 import path from 'path';
 import { FileUploadRequest, FileUploadState } from '@thoughtforge/shared/types/fileUpload';
+import { FileValidationOptions, validateFiles, FileValidationError } from '@thoughtforge/shared/utils/fileValidation';
+
+const DEFAULT_VALIDATION_OPTIONS: FileValidationOptions = {
+  maxSize: 5 * 1024 * 1024, // 5MB
+  allowedTypes: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+  maxFiles: 10
+};
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
@@ -10,7 +17,8 @@ const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 export const handleFileUpload = (
   req: FileUploadRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
+  options: FileValidationOptions = DEFAULT_VALIDATION_OPTIONS
 ): void => {
   if (!isFileUploadRequest(req)) {
     return next();
@@ -229,10 +237,25 @@ function handleEnd(
   state: FileUploadState,
   next: NextFunction
 ): void {
-  console.log('handle end')
-  finishCurrentFile(state);
-  req.files = state.files;
-  next();
+  try {
+    finishCurrentFile(state);
+    req.files = state.files;
+    
+    // Validate files before completing
+    validateFiles(state.files, DEFAULT_VALIDATION_OPTIONS);
+    
+    next();
+  } catch (error) {
+    if (error instanceof FileValidationError) {
+      // Clean up any uploaded files
+      state.files.forEach(file => {
+        fs.unlink(file.path, () => {});
+      });
+      next(error);
+    } else {
+      next(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
 }
 
 function handleError(
