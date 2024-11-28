@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { handleFileUpload } from '../../src/middlewares/fileUploadHandler';
-import { FileUploadRequest } from '@thoughtforge/shared/types/fileUpload';
-import fs from 'fs';
-import path from 'path';
+import { handleFileUpload } from '@thoughtforge/backend/src/middlewares/fileUploadHandler';
+import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
+import * as fs from 'fs';
+import * as path from 'path';
 
 jest.mock('fs');
 

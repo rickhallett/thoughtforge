@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import * as fs from 'fs';
 
 export interface UploadedFile {
   fieldName: string;
@@ -15,7 +16,7 @@ export interface FileUploadState {
   boundaryBuffer: Buffer;
   files: UploadedFile[];
   currentFile: UploadedFile | null;
-  fileStream: NodeJS.WriteStream | null;
+  fileStream: fs.WriteStream | null;
   isReadingHeader: boolean;
   rawBody: Buffer;
 }

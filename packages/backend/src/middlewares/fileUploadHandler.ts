@@ -179,7 +179,7 @@ function createNewFileUpload(
       path: path.join(UPLOAD_DIR, `${Date.now()}-${fileInfo.filename}`),
     };
 
-    state.fileStream = fs.createWriteStream(state.currentFile.path);
+    state.fileStream = fs.createWriteStream(state.currentFile.path) as fs.WriteStream;
 
     state.fileStream.on('error', (err: Error) => {
       handleFileStreamError(state, err, next);
