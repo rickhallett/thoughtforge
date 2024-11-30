@@ -1,5 +1,5 @@
 import { ContentParser } from "@thoughtforge/backend/src/pipelines/processors/standardizationProcessor";
-import { ParsedDocument, ParsedDocumentMeta } from "@thoughtforge/backend/src/types/pipeline";
+import { ContentType, ParsedDocument, ParsedDocumentMeta } from "@thoughtforge/backend/src/pipelines/interfaces/contentProcessor";
 
 interface MarkdownMeta extends ParsedDocumentMeta { }
 
@@ -91,6 +91,7 @@ export class MarkdownBuilder {
         lastUpdated: new Date().toISOString(),
         ...defaultMeta,
       },
+      type: ContentType.MARKDOWN,
     };
   }
 

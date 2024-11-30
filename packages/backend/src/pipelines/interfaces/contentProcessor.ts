@@ -20,12 +20,26 @@ export enum ContentType {
   HTML = 'html',
   PLAIN_TEXT = 'plain_text',
   PDF = 'pdf',
-  DOCX = 'docx'
+  DOCX = 'docx',
 }
 
 export enum OutputFormat {
   BLOG_POST = 'blog_post',
   TECHNICAL_ARTICLE = 'technical_article',
   REFERENCE_DOC = 'reference_doc',
-  TUTORIAL = 'tutorial'
+  TUTORIAL = 'tutorial',
+}
+
+export interface ParsedDocument {
+  title: string;
+  content: string;
+  meta: ParsedDocumentMeta;
+  type: ContentType;
+}
+
+export interface ParsedDocumentMeta {
+  tags?: string[];
+  lastUpdated?: string; // ISO format
+  author?: string;
+  timeToRead?: number;
 }
