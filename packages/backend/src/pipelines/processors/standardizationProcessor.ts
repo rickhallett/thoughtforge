@@ -1,5 +1,16 @@
-import { ContentProcessor, ProcessingMetadata, ProcessingResult, ContentType } from '../interfaces/contentProcessor';
-import { MarkdownParser } from '../../utils/markdownParser';
+import {
+  ContentProcessor,
+  ProcessingMetadata,
+  ProcessingResult,
+  ContentType,
+  ParsedDocument,
+} from '@thoughtforge/backend/src/pipelines/interfaces/contentProcessor';
+import { MarkdownParser } from '@thoughtforge/backend/src/utils/markdownParser';
+
+
+export interface ContentParser {
+  parse(content: string): Promise<ParsedDocument>;
+}
 
 export class StandardizationProcessor implements ContentProcessor {
   private parsers: Map<ContentType, ContentParser>;
@@ -18,18 +29,14 @@ export class StandardizationProcessor implements ContentProcessor {
     }
 
     const standardizedContent = await parser.parse(content);
-    
+
     return {
-      content: standardizedContent,
+      content: standardizedContent.content,
       metadata: {
         ...metadata,
-        contentType: ContentType.MARKDOWN // We standardize to markdown
+        contentType: ContentType.MARKDOWN, // We standardize to markdown
       },
-      processingNotes: [`Standardized from ${metadata.contentType} to markdown`]
+      processingNotes: [`Standardized from ${metadata.contentType} to markdown`],
     };
   }
-}
-
-interface ContentParser {
-  parse(content: string): Promise<string>;
 }
