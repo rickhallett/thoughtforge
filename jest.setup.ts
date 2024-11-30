@@ -1,5 +1,5 @@
 // Global logger mock
-jest.mock('./src/utils/logger', () => ({
+jest.mock('@thoughtforge/shared/src/utils/logger', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
@@ -7,4 +7,4 @@ jest.mock('./src/utils/logger', () => ({
     debug: jest.fn(),
   },
   requestLogger: jest.fn((req, res, next) => next()),
-})); 
+})); // TODO: move this to shared

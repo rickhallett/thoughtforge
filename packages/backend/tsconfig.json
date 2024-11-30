@@ -1,11 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./src",
     "paths": {
-      "@thoughtforge/shared/*": ["../../shared/src/*"]
+      "@thoughtforge/shared/*": [
+        "../../shared/src/*",
+      ]
     },
     "types": [
       "express",
@@ -15,9 +18,12 @@
   },
   "include": [
     "src/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "../shared/src/utils/logger.ts"
   ],
   "references": [
-    { "path": "../shared" }
+    {
+      "path": "../shared"
+    }
   ]
 }
