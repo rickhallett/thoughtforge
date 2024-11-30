@@ -1,5 +1,8 @@
-import { ContentPipeline } from '../../../src/pipelines/contentPipeline';
-import { ContentType, OutputFormat } from '../../../src/pipelines/interfaces/contentProcessor';
+import { ContentPipeline } from '@thoughtforge/backend/src/pipelines/contentPipeline';
+import {
+  ContentType,
+  OutputFormat,
+} from '@thoughtforge/backend/src/pipelines/interfaces/contentProcessor';
 
 describe('ContentPipeline Integration', () => {
   let pipeline: ContentPipeline;
@@ -9,10 +12,10 @@ describe('ContentPipeline Integration', () => {
   });
 
   it('should process content through entire pipeline', async () => {
-    const result = await pipeline.process('# Test Content', {
+    const result = await pipeline.process('# Title\n\n## Content \n Stuff stuff stuff', {
       contentType: ContentType.MARKDOWN,
       targetFormat: OutputFormat.BLOG_POST,
-      tags: ['test']
+      tags: ['test'],
     });
 
     expect(result.content).toBeDefined();
@@ -23,14 +26,14 @@ describe('ContentPipeline Integration', () => {
   });
 
   it('should maintain processing order', async () => {
-    const result = await pipeline.process('Test Content', {
+    const result = await pipeline.process('# Title\n\n## Content \n Stuff stuff stuff', {
       contentType: ContentType.MARKDOWN,
-      targetFormat: OutputFormat.BLOG_POST
+      targetFormat: OutputFormat.BLOG_POST,
     });
 
     const notes = result.processingNotes || [];
     expect(notes[0]).toContain('Standardized');
     expect(notes[1]).toContain('AI enhancement');
-    expect(notes[2]).toContain('SEO optimization');
+    expect(notes[3]).toContain('SEO optimization');
   });
 });

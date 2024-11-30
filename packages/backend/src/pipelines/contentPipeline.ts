@@ -1,4 +1,8 @@
-import { ContentProcessor, ProcessingMetadata, ProcessingResult } from './interfaces/contentProcessor';
+import {
+  ContentProcessor,
+  ProcessingMetadata,
+  ProcessingResult,
+} from './interfaces/contentProcessor';
 import { StandardizationProcessor } from './processors/standardizationProcessor';
 import { AIEnhancementProcessor } from './processors/aiEnhancementProcessor';
 import { SEOEnhancementProcessor } from './processors/seoEnhancementProcessor';
@@ -10,7 +14,7 @@ export class ContentPipeline {
     this.processors = [
       new StandardizationProcessor(),
       new AIEnhancementProcessor(),
-      new SEOEnhancementProcessor()
+      new SEOEnhancementProcessor(),
     ];
   }
 
@@ -24,13 +28,13 @@ export class ContentPipeline {
         const result = await processor.process(currentContent, currentMetadata);
         currentContent = result.content;
         currentMetadata = result.metadata;
-        
+
         if (result.processingNotes) {
           allProcessingNotes.push(...result.processingNotes);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        allProcessingNotes.push(`Error in processing step: ${errorMessage}`);
+        allProcessingNotes.push(`Error in ${processor.name} step: ${errorMessage}`);
         throw error;
       }
     }
@@ -38,7 +42,7 @@ export class ContentPipeline {
     return {
       content: currentContent,
       metadata: currentMetadata,
-      processingNotes: allProcessingNotes
+      processingNotes: allProcessingNotes,
     };
   }
 }
