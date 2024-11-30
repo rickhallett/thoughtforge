@@ -51,8 +51,8 @@ export class TagsParser implements LineParserStrategy {
     const tagsString = line.substring(5).trim();
     const tags = tagsString
       .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0);
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
     builder.setTags(tags);
   }
 }
@@ -98,8 +98,8 @@ export class MarkdownBuilder {
       meta: {
         tags: [],
         lastUpdated: new Date().toISOString(),
-        ...defaultMeta
-      }
+        ...defaultMeta,
+      },
     };
   }
 
@@ -132,25 +132,30 @@ export class MarkdownParser {
     this.strategies = config.strategies || [
       new TitleParser(),
       new TagsParser(),
-      new ContentSectionParser()
+      new ContentSectionParser(),
     ];
-    this.preProcessHooks = config.preProcessHooks || [normalizeLineEndings, removeExtraWhitespace, convertTabsToSpaces, normalizeHeaders];
+    this.preProcessHooks = config.preProcessHooks || [
+      normalizeLineEndings,
+      removeExtraWhitespace,
+      convertTabsToSpaces,
+      normalizeHeaders,
+    ];
     this.postProcessHooks = config.postProcessHooks || [validateRequiredFields, addTimeToRead];
   }
 
-  parseMarkdown(markdown: string): MarkdownDocument {
+  // TODO: design a new interface for this
+  async parse(markdown: string): Promise<MarkdownDocument> {
     // Apply pre-process hooks
-    let processedMarkdown = this.preProcessHooks.reduce(
-      (text, hook) => hook(text),
-      markdown
-    );
+    let processedMarkdown = this.preProcessHooks.reduce((text, hook) => hook(text), markdown);
 
     // Parse the markdown
     const builder = new MarkdownBuilder(this.config.defaultMeta);
     const lines = processedMarkdown.split('\n');
 
     // get content parser
-    const contentParser = this.strategies.find(strategy => strategy instanceof ContentSectionParser);
+    const contentParser = this.strategies.find(
+      (strategy) => strategy instanceof ContentSectionParser
+    );
 
     for (const line of lines) {
       // If we are inside the content section, give priority to the content parser
@@ -169,23 +174,14 @@ export class MarkdownParser {
           break; // Move to the next line after parsing
         }
       }
-
-
     }
-
     // Apply post-process hooks
     let document = builder.build();
-    document = this.postProcessHooks.reduce(
-      (doc, hook) => hook(doc),
-      document
-    );
+    document = this.postProcessHooks.reduce((doc, hook) => hook(doc), document);
 
-    return document;
-
-
+    return document
   }
 }
-
 
 // Pre-process hooks
 export const normalizeLineEndings: PreProcessHook = (markdown: string) => {
@@ -226,7 +222,7 @@ export const addTimeToRead: PostProcessHook = (doc: MarkdownDocument) => {
     ...doc,
     meta: {
       ...doc.meta,
-      timeToRead: timeToRead
-    }
+      timeToRead: timeToRead,
+    },
   };
 };
