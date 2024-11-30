@@ -1,16 +1,7 @@
-// Interfaces
-export interface MarkdownMeta {
-  tags?: string[];
-  lastUpdated?: string; // ISO format
-  author?: string;
-  timeToRead?: number;
-}
+import { ContentParser } from "@thoughtforge/backend/src/pipelines/processors/standardizationProcessor";
+import { ParsedDocument, ParsedDocumentMeta } from "@thoughtforge/backend/src/types/pipeline";
 
-export interface MarkdownDocument {
-  title: string;
-  content: string;
-  meta: MarkdownMeta;
-}
+interface MarkdownMeta extends ParsedDocumentMeta { }
 
 export interface LineParserStrategy {
   canParse(line: string): boolean;
@@ -26,7 +17,7 @@ export interface ParserConfig {
 
 // Types
 export type PreProcessHook = (markdown: string) => string;
-export type PostProcessHook = (document: MarkdownDocument) => MarkdownDocument;
+export type PostProcessHook = (document: ParsedDocument) => ParsedDocument;
 
 // Classes
 export class TitleParser implements LineParserStrategy {
@@ -88,7 +79,7 @@ export class ContentSectionParser implements LineParserStrategy {
 }
 
 export class MarkdownBuilder {
-  private document: MarkdownDocument;
+  private document: ParsedDocument;
   private contentLines: string[] = [];
 
   constructor(defaultMeta: Partial<MarkdownMeta> = {}) {
@@ -115,13 +106,13 @@ export class MarkdownBuilder {
     this.contentLines.push(line.trim() === '' ? '' : line);
   }
 
-  build(): MarkdownDocument {
+  build(): ParsedDocument {
     this.document.content = this.contentLines.join('\n').trim();
     return { ...this.document };
   }
 }
 
-export class MarkdownParser {
+export class MarkdownParser implements ContentParser {
   private strategies: LineParserStrategy[];
   private preProcessHooks: PreProcessHook[];
   private postProcessHooks: PostProcessHook[];
@@ -143,25 +134,20 @@ export class MarkdownParser {
     this.postProcessHooks = config.postProcessHooks || [validateRequiredFields, addTimeToRead];
   }
 
-  // TODO: design a new interface for this
-  async parse(markdown: string): Promise<MarkdownDocument> {
-    // Apply pre-process hooks
+  async parse(markdown: string): Promise<ParsedDocument> {
     let processedMarkdown = this.preProcessHooks.reduce((text, hook) => hook(text), markdown);
 
-    // Parse the markdown
     const builder = new MarkdownBuilder(this.config.defaultMeta);
     const lines = processedMarkdown.split('\n');
 
-    // get content parser
     const contentParser = this.strategies.find(
       (strategy) => strategy instanceof ContentSectionParser
     );
 
     for (const line of lines) {
-      // If we are inside the content section, give priority to the content parser
       if (contentParser && contentParser.canParse(line)) {
         contentParser.parse(line, builder);
-        continue; // Move to the next line
+        continue;
       } else {
         // Check if we need to exit the content section
         // The content parser's canParse method handles state transitions
@@ -171,11 +157,11 @@ export class MarkdownParser {
       for (const parser of this.strategies) {
         if (parser !== contentParser && parser.canParse(line)) {
           parser.parse(line, builder);
-          break; // Move to the next line after parsing
+          break;
         }
       }
     }
-    // Apply post-process hooks
+
     let document = builder.build();
     document = this.postProcessHooks.reduce((doc, hook) => hook(doc), document);
 
@@ -203,7 +189,7 @@ export const normalizeHeaders: PreProcessHook = (markdown: string) => {
 };
 
 // Post-process hooks
-export const validateRequiredFields: PostProcessHook = (doc: MarkdownDocument) => {
+export const validateRequiredFields: PostProcessHook = (doc: ParsedDocument) => {
   if (!doc.title) {
     throw new Error('Document must have a title');
   }
@@ -213,7 +199,7 @@ export const validateRequiredFields: PostProcessHook = (doc: MarkdownDocument) =
   return doc;
 };
 
-export const addTimeToRead: PostProcessHook = (doc: MarkdownDocument) => {
+export const addTimeToRead: PostProcessHook = (doc: ParsedDocument) => {
   const wordsPerMinute = 200;
   const wordCount = doc.content.split(/\s+/).length;
   const timeToRead = Math.ceil(wordCount / wordsPerMinute);
