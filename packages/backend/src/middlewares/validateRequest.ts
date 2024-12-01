@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { FileUploadRequest } from './fileUploadHandler';
+import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
 
 // Regular request validator (for JSON/form data)
 export const validateBody = (schema: z.ZodSchema) => {
@@ -23,10 +23,10 @@ export const validateFileUpload = (schema: z.ZodSchema) => {
   return (req: Request & FileUploadRequest, res: Response, next: NextFunction) => {
     console.log('req.files', req.files);
     console.log('req.body', req.body);
-    
+
     const dataToValidate = {
       ...req.body,
-      files: req.files
+      files: req.files,
     };
 
     const { error } = schema.safeParse(dataToValidate);

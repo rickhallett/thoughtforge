@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { handleFileUpload } from '@thoughtforge/backend/src/middlewares/fileUploadHandler';
 import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
-import { FileValidationError } from '@thoughtforge/shared/utils/fileValidation';
+import { FileValidationError } from '@thoughtforge/shared/src/utils/fileValidation';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -19,7 +19,7 @@ describe('handleFileUpload Middleware', () => {
 
     eventHandlers = {
       req: {},
-      fileStream: {}
+      fileStream: {},
     };
 
     mockReq = {
@@ -35,7 +35,7 @@ describe('handleFileUpload Middleware', () => {
     mockNext = jest.fn();
 
     (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => { });
+    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
     mockFileStream = {
       write: jest.fn(),
       end: jest.fn(),
@@ -53,7 +53,7 @@ describe('handleFileUpload Middleware', () => {
       }),
     };
     (fs.createWriteStream as jest.Mock).mockReturnValue(mockFileStream);
-    (fs.unlink as unknown as jest.Mock).mockImplementation(() => { });
+    (fs.unlink as unknown as jest.Mock).mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -236,7 +236,6 @@ describe('handleFileUpload Middleware', () => {
     // Emit end event
     eventHandlers.req['end']();
 
-
     // Wait until next() is called
     await nextCalled;
 
@@ -278,7 +277,7 @@ describe('handleFileUpload Middleware', () => {
       'content-type': 'multipart/form-data; boundary=BoundaryUnexpected',
     };
 
-    // Make fs.createWriteStream throw an error                                                                                                                                 
+    // Make fs.createWriteStream throw an error
     (fs.createWriteStream as jest.Mock).mockImplementation(() => {
       throw new Error('Unexpected error');
     });
@@ -331,7 +330,9 @@ describe('handleFileUpload Middleware', () => {
     await nextCalled;
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(FileValidationError));
-    expect(mockNext.mock.calls[0][0].message).toContain('File type not allowed');
+    expect((mockNext.mock.calls[0][0] as unknown as FileValidationError).message).toContain(
+      'File type not allowed'
+    );
   });
 
   test('should enforce maximum file count', async () => {
@@ -347,14 +348,18 @@ describe('handleFileUpload Middleware', () => {
     });
 
     // Create 11 files (exceeding the default max of 10)
-    const files = Array(11).fill(null).map((_, i) => ({
-      header: Buffer.concat([
-        Buffer.from(`--${boundary}\r\n`),
-        Buffer.from(`Content-Disposition: form-data; name="file${i}"; filename="test${i}.jpg"\r\n`),
-        Buffer.from('Content-Type: image/jpeg\r\n\r\n'),
-      ]),
-      content: Buffer.from('test content'),
-    }));
+    const files = Array(11)
+      .fill(null)
+      .map((_, i) => ({
+        header: Buffer.concat([
+          Buffer.from(`--${boundary}\r\n`),
+          Buffer.from(
+            `Content-Disposition: form-data; name="file${i}"; filename="test${i}.jpg"\r\n`
+          ),
+          Buffer.from('Content-Type: image/jpeg\r\n\r\n'),
+        ]),
+        content: Buffer.from('test content'),
+      }));
 
     handleFileUpload(mockReq as FileUploadRequest, mockRes as Response, mockNext);
 
@@ -364,13 +369,15 @@ describe('handleFileUpload Middleware', () => {
       eventHandlers.req['data'](file.content);
       eventHandlers.req['data'](Buffer.from('\r\n'));
     }
-    
+
     eventHandlers.req['data'](Buffer.from(`--${boundary}--\r\n`));
     eventHandlers.req['end']();
 
     await nextCalled;
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(FileValidationError));
-    expect(mockNext.mock.calls[0][0].message).toContain('Maximum number of files');
+    expect((mockNext.mock.calls[0][0] as unknown as FileValidationError).message).toContain(
+      'Maximum number of files'
+    );
   });
 });

@@ -2,17 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../prisma';
 import fs from 'fs';
 import path from 'path';
-import { FileUploadRequest, FileUploadState } from '@thoughtforge/shared/types/fileUpload';
-import { FileValidationOptions, validateFiles, FileValidationError } from '@thoughtforge/shared/utils/fileValidation';
+import { FileUploadRequest, FileUploadState } from '@thoughtforge/shared/src/types/fileUpload';
+import {
+  FileValidationOptions,
+  validateFiles,
+  FileValidationError,
+} from '@thoughtforge/shared/src/utils/fileValidation';
 
 const DEFAULT_VALIDATION_OPTIONS: FileValidationOptions = {
   maxSize: 5 * 1024 * 1024, // 5MB
   allowedTypes: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
-  maxFiles: 10
+  maxFiles: 10,
 };
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-
 
 export const handleFileUpload = (
   req: FileUploadRequest,
@@ -51,7 +54,7 @@ function initializeState(boundary: string): FileUploadState {
     currentFile: null,
     fileStream: null,
     isReadingHeader: true,
-    rawBody: Buffer.alloc(0)
+    rawBody: Buffer.alloc(0),
   };
 }
 
@@ -72,7 +75,7 @@ function setupEventHandlers(
       await prisma.uploadRawBody.create({
         data: {
           content: state.rawBody.toString(),
-        }
+        },
       });
 
       handleEnd(req, state, next);
@@ -86,11 +89,7 @@ function setupEventHandlers(
   });
 }
 
-function handleChunk(
-  chunk: Buffer,
-  state: FileUploadState,
-  next: NextFunction
-): void {
+function handleChunk(chunk: Buffer, state: FileUploadState, next: NextFunction): void {
   try {
     // Append new chunk to existing buffer
     state.buffer = Buffer.concat([state.buffer, chunk]);
@@ -167,7 +166,7 @@ function extractFileInfo(header: string): { fieldName: string; filename: string 
   if (filenameMatch && fieldNameMatch) {
     return {
       fieldName: fieldNameMatch[1],
-      filename: filenameMatch[1]
+      filename: filenameMatch[1],
     };
   }
   return null;
@@ -185,6 +184,8 @@ function createNewFileUpload(
       fieldName: fileInfo.fieldName,
       filename: fileInfo.filename,
       path: path.join(UPLOAD_DIR, `${Date.now()}-${fileInfo.filename}`),
+      size: 0, // TODO: add file size
+      mimeType: '', // TODO: add mime type
     };
 
     state.fileStream = fs.createWriteStream(state.currentFile.path) as fs.WriteStream;
@@ -199,11 +200,7 @@ function createNewFileUpload(
   }
 }
 
-function handleFileStreamError(
-  state: FileUploadState,
-  err: Error,
-  next: NextFunction
-): void {
+function handleFileStreamError(state: FileUploadState, err: Error, next: NextFunction): void {
   if (state.fileStream) {
     state.fileStream.end();
   }
@@ -232,24 +229,20 @@ function finishCurrentFile(state: FileUploadState): void {
   }
 }
 
-function handleEnd(
-  req: FileUploadRequest,
-  state: FileUploadState,
-  next: NextFunction
-): void {
+function handleEnd(req: FileUploadRequest, state: FileUploadState, next: NextFunction): void {
   try {
     finishCurrentFile(state);
     req.files = state.files;
-    
+
     // Validate files before completing
     validateFiles(state.files, DEFAULT_VALIDATION_OPTIONS);
-    
+
     next();
   } catch (error) {
-    if (error instanceof FileValidationError) {
+    if (error) {
       // Clean up any uploaded files
-      state.files.forEach(file => {
-        fs.unlink(file.path, () => {});
+      state.files.forEach((file) => {
+        fs.unlink(file.path, () => { });
       });
       next(error);
     } else {
@@ -258,15 +251,10 @@ function handleEnd(
   }
 }
 
-function handleError(
-  state: FileUploadState,
-  err: Error,
-  next: NextFunction
-): void {
+function handleError(state: FileUploadState, err: Error, next: NextFunction): void {
   if (state.fileStream && state.currentFile) {
     state.fileStream.end();
     fs.unlink(state.currentFile.path, () => { });
   }
   next(err);
 }
-

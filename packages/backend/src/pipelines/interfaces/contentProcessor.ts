@@ -1,4 +1,5 @@
 export interface ContentProcessor {
+  name: string;
   process(content: string, metadata?: ProcessingMetadata): Promise<ProcessingResult>;
 }
 
@@ -35,6 +36,7 @@ export interface ParsedDocument {
   content: string;
   meta: ParsedDocumentMeta;
   type: ContentType;
+  processingNotes?: string[];
 }
 
 export interface ParsedDocumentMeta {

@@ -13,6 +13,7 @@ export interface ContentParser {
 }
 
 export class StandardizationProcessor implements ContentProcessor {
+  name: string = 'StandardizationProcessor';
   private parsers: Map<ContentType, ContentParser>;
 
   constructor() {

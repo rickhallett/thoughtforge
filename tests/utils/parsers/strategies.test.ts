@@ -1,5 +1,9 @@
-import { TitleParser, TagsParser, ContentSectionParser, MarkdownBuilder } from '../../../src/utils/markdownParser';
-
+import {
+  TitleParser,
+  TagsParser,
+  ContentSectionParser,
+  MarkdownBuilder,
+} from '@thoughtforge/backend/src/utils/markdownParser';
 
 describe('Parser Strategies', () => {
   describe('TitleParser', () => {
@@ -215,9 +219,7 @@ describe('Parser Strategies', () => {
       parser.parse('Next line', builder); // Normal content
 
       const result = builder.build();
-      expect(result.content).toBe(
-        '## content\n\n\n\n\n\nNext line'
-      );
+      expect(result.content).toBe('## content\n\n\n\n\n\nNext line');
     });
 
     it('should preserve indentation in code blocks', () => {
@@ -230,9 +232,7 @@ describe('Parser Strategies', () => {
       parser.parse('```', builder);
 
       const result = builder.build();
-      expect(result.content).toBe(
-        '## content\n```\n    indented code\n  less indented\n```'
-      );
+      expect(result.content).toBe('## content\n```\n    indented code\n  less indented\n```');
     });
 
     it('should handle consecutive empty lines', () => {
@@ -245,9 +245,7 @@ describe('Parser Strategies', () => {
       parser.parse('Text after empty lines', builder);
 
       const result = builder.build();
-      expect(result.content).toBe(
-        '## content\n\n\n\nText after empty lines'
-      );
+      expect(result.content).toBe('## content\n\n\n\nText after empty lines');
     });
 
     it('should handle nested headers', () => {

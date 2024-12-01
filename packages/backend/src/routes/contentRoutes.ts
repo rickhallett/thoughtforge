@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ContentController } from '../controllers/contentController';
 import { validateBody, validateFileUpload } from '../middlewares/validateRequest';
 import { z } from 'zod';
-import { FileUploadRequest } from '../middlewares/fileUploadHandler';
+import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
 
 const router = Router();
 const contentController = new ContentController();
@@ -13,9 +13,11 @@ const contentProcessSchema = z.object({
   options: z.object({}).optional(),
 });
 
-const uploadFilesSchema = z.object({
-  files: z.array(z.any()),
-}).passthrough();
+const uploadFilesSchema = z
+  .object({
+    files: z.array(z.any()),
+  })
+  .passthrough();
 
 router.post('/process', validateBody(contentProcessSchema), contentController.processContent);
 

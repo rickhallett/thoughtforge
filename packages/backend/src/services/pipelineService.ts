@@ -11,12 +11,12 @@ export class PipelineService {
   async executePipeline(content: string, metadata: ProcessingMetadata): Promise<ProcessingResult> {
     try {
       const result = await this.pipeline.process(content, metadata);
-      
+
       // Log processing completion
       console.log('Pipeline processing completed:', {
         processingNotes: result.processingNotes,
         contentType: result.metadata.contentType,
-        targetFormat: result.metadata.targetFormat
+        targetFormat: result.metadata.targetFormat,
       });
 
       return result;

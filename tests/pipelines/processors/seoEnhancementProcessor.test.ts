@@ -1,5 +1,8 @@
-import { SEOEnhancementProcessor } from '../../../src/pipelines/processors/seoEnhancementProcessor';
-import { ContentType, OutputFormat } from '../../../src/pipelines/interfaces/contentProcessor';
+import { SEOEnhancementProcessor } from '@thoughtforge/backend/src/pipelines/processors/seoEnhancementProcessor';
+import {
+  ContentType,
+  OutputFormat,
+} from '@thoughtforge/backend/src/pipelines/interfaces/contentProcessor';
 
 describe('SEOEnhancementProcessor', () => {
   let processor: SEOEnhancementProcessor;
@@ -12,7 +15,7 @@ describe('SEOEnhancementProcessor', () => {
     const result = await processor.process('Test content', {
       contentType: ContentType.MARKDOWN,
       targetFormat: OutputFormat.BLOG_POST,
-      tags: ['test', 'content']
+      tags: ['test', 'content'],
     });
 
     expect(result.metadata.additionalContext?.seoOptimized).toBe(true);
@@ -22,7 +25,7 @@ describe('SEOEnhancementProcessor', () => {
   it('should handle content without keywords', async () => {
     const result = await processor.process('Test content', {
       contentType: ContentType.MARKDOWN,
-      targetFormat: OutputFormat.BLOG_POST
+      targetFormat: OutputFormat.BLOG_POST,
     });
 
     expect(result.processingNotes).toContain('No keywords available for SEO optimization');

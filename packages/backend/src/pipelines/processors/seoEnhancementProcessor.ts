@@ -1,6 +1,11 @@
-import { ContentProcessor, ProcessingMetadata, ProcessingResult } from '../interfaces/contentProcessor';
+import {
+  ContentProcessor,
+  ProcessingMetadata,
+  ProcessingResult,
+} from '../interfaces/contentProcessor';
 
 export class SEOEnhancementProcessor implements ContentProcessor {
+  name: string = 'SEOEnhancementProcessor';
   private readonly keywordDensityTarget = 0.02; // 2% keyword density target
   private readonly minKeywordsPerSection = 2;
 
@@ -10,7 +15,7 @@ export class SEOEnhancementProcessor implements ContentProcessor {
       return {
         content,
         metadata,
-        processingNotes: ['No keywords available for SEO optimization']
+        processingNotes: ['No keywords available for SEO optimization'],
       };
     }
 
@@ -26,14 +31,14 @@ export class SEOEnhancementProcessor implements ContentProcessor {
           ...metadata.additionalContext,
           seoOptimized: true,
           targetKeywordDensity: this.keywordDensityTarget,
-          keywords
-        }
+          keywords,
+        },
       },
       processingNotes: [
         'Applied SEO optimization',
         `Target keywords: ${keywords.join(', ')}`,
-        `Target keyword density: ${this.keywordDensityTarget * 100}%`
-      ]
+        `Target keyword density: ${this.keywordDensityTarget * 100}%`,
+      ],
     };
   }
 }

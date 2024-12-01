@@ -5,16 +5,13 @@ import { prisma } from './prisma';
 import contentRoutes from './routes/contentRoutes';
 import healthcheckRoutes from './routes/healthcheckRoutes';
 import { handleFileUpload } from './middlewares/fileUploadHandler';
-import { requestLogger } from './utils/logger';
+import { requestLogger } from '../../shared/src/utils/logger';
 
 const app = express();
 
 app.use(express.json());
 
 app.use(requestLogger);
-
-// Middleware to capture raw data
-// app.use(captureRawBody());
 
 // TODO: check dest folder if upload already exists
 app.use(handleFileUpload);
@@ -42,5 +39,3 @@ process.on('SIGTERM', async () => {
 });
 
 export default app;
-
-

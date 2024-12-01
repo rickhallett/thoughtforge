@@ -28,7 +28,6 @@ describe('StandardizationProcessor', () => {
   beforeEach(() => {
     processor = new StandardizationProcessor();
     // Inject mock parser
-    // (processor as any).parsers.set(ContentType.MARKDOWN, new MockContentParser());
     (processor as any).parsers.set(ContentType.MARKDOWN, new MarkdownParser());
   });
 

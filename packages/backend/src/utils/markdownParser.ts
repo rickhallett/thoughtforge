@@ -92,6 +92,7 @@ export class MarkdownBuilder {
         ...defaultMeta,
       },
       type: ContentType.MARKDOWN,
+      processingNotes: [],
     };
   }
 
@@ -114,6 +115,8 @@ export class MarkdownBuilder {
 }
 
 export class MarkdownParser implements ContentParser {
+  name: string = 'MarkdownParser';
+
   private strategies: LineParserStrategy[];
   private preProcessHooks: PreProcessHook[];
   private postProcessHooks: PostProcessHook[];
@@ -164,6 +167,7 @@ export class MarkdownParser implements ContentParser {
     }
 
     let document = builder.build();
+
     document = this.postProcessHooks.reduce((doc, hook) => hook(doc), document);
 
     return document

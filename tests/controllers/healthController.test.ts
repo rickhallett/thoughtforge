@@ -1,10 +1,9 @@
-
 import { Request, Response } from 'express';
-import { HealthcheckController } from '../../src/controllers/healthcheckController';
-import HealthcheckService from '../../src/services/healthcheckService';
+import { HealthcheckController } from '@thoughtforge/backend/src/controllers/healthcheckController';
+import HealthcheckService from '@thoughtforge/backend/src/services/healthcheckService';
 
 // Mock the HealthcheckService
-jest.mock('../../src/services/healthcheckService');
+jest.mock('@thoughtforge/backend/src/services/healthcheckService');
 
 describe('HealthcheckController', () => {
   let healthcheckController: HealthcheckController;
@@ -33,7 +32,9 @@ describe('HealthcheckController', () => {
     } as unknown as jest.Mocked<HealthcheckService>;
 
     // Replace the mock implementation
-    (HealthcheckService as jest.MockedClass<typeof HealthcheckService>).mockImplementation(() => mockHealthcheckService);
+    (HealthcheckService as jest.MockedClass<typeof HealthcheckService>).mockImplementation(
+      () => mockHealthcheckService
+    );
 
     // Create controller instance
     healthcheckController = new HealthcheckController();
@@ -45,10 +46,7 @@ describe('HealthcheckController', () => {
       mockHealthcheckService.ping.mockResolvedValue();
 
       // Act
-      await healthcheckController.ping(
-        mockRequest as Request,
-        mockResponse as Response
-      );
+      await healthcheckController.ping(mockRequest as Request, mockResponse as Response);
 
       // Assert
       expect(mockHealthcheckService.ping).toHaveBeenCalledTimes(1);

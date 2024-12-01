@@ -1,10 +1,11 @@
+import { ContentType } from '@thoughtforge/backend/src/pipelines/interfaces/contentProcessor';
 import {
   normalizeLineEndings,
   removeExtraWhitespace,
   convertTabsToSpaces,
   validateRequiredFields,
-  addTimeToRead
-} from '../../../src/utils/markdownParser';
+  addTimeToRead,
+} from '@thoughtforge/backend/src/utils/markdownParser';
 
 describe('Pre-process Hooks', () => {
   describe('normalizeLineEndings', () => {
@@ -35,7 +36,8 @@ describe('Post-process Hooks', () => {
       const doc = {
         title: '',
         content: 'content',
-        meta: {}
+        meta: {},
+        type: ContentType.MARKDOWN,
       };
       expect(() => validateRequiredFields(doc)).toThrow('Document must have a title');
     });
@@ -44,7 +46,8 @@ describe('Post-process Hooks', () => {
       const doc = {
         title: 'title',
         content: '',
-        meta: {}
+        meta: {},
+        type: ContentType.MARKDOWN,
       };
       expect(() => validateRequiredFields(doc)).toThrow('Document must have content');
     });
@@ -56,11 +59,12 @@ describe('Post-process Hooks', () => {
       const doc = {
         title: 'title',
         content: words,
-        meta: {}
+        meta: {},
+        type: ContentType.MARKDOWN,
       };
-      
+
       const result = addTimeToRead(doc);
       expect(result.meta.timeToRead).toBe(2); // 2 minutes for 400 words
     });
   });
-}); 
+});

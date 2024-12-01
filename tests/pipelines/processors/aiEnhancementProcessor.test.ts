@@ -1,5 +1,8 @@
-import { AIEnhancementProcessor } from '../../../src/pipelines/processors/aiEnhancementProcessor';
-import { ContentType, OutputFormat } from '../../../src/pipelines/interfaces/contentProcessor';
+import { AIEnhancementProcessor } from '@thoughtforge/backend/src/pipelines/processors/aiEnhancementProcessor';
+import {
+  ContentType,
+  OutputFormat,
+} from '@thoughtforge/backend/src/pipelines/interfaces/contentProcessor';
 
 describe('AIEnhancementProcessor', () => {
   let processor: AIEnhancementProcessor;
@@ -11,7 +14,7 @@ describe('AIEnhancementProcessor', () => {
   it('should process content with valid template', async () => {
     const result = await processor.process('Test content', {
       contentType: ContentType.MARKDOWN,
-      targetFormat: OutputFormat.BLOG_POST
+      targetFormat: OutputFormat.BLOG_POST,
     });
 
     expect(result.metadata.additionalContext?.aiEnhanced).toBe(true);
@@ -19,9 +22,11 @@ describe('AIEnhancementProcessor', () => {
   });
 
   it('should throw error for unsupported format', async () => {
-    await expect(processor.process('Test', {
-      contentType: ContentType.MARKDOWN,
-      targetFormat: 'unsupported' as OutputFormat
-    })).rejects.toThrow('No prompt template available');
+    await expect(
+      processor.process('Test', {
+        contentType: ContentType.MARKDOWN,
+        targetFormat: 'unsupported' as OutputFormat,
+      })
+    ).rejects.toThrow('No prompt template available');
   });
 });

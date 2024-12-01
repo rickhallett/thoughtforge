@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ContentService } from '../services/contentService';
-import { FileUploadRequest } from '../middlewares/fileUploadHandler';
+import { FileUploadRequest } from '@thoughtforge/shared/src/types/fileUpload';
 
 export class ContentController {
   private contentService: ContentService;
@@ -29,8 +29,7 @@ export class ContentController {
 
     res.json({
       message: 'Files uploaded successfully',
-      files: req.files
+      files: req.files,
     });
   }
 }
-

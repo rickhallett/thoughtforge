@@ -44,7 +44,7 @@ describe('ContentPipeline Integration', () => {
     it('should handle processor failures gracefully', async () => {
       // Mock one processor to throw an error
       jest.spyOn(AIEnhancementProcessor.prototype, 'process').mockRejectedValueOnce(new Error('AI Service unavailable'));
-      
+
       await expect(pipeline.process('# Test\n\n## Content\nContent', {
         contentType: ContentType.MARKDOWN,
         targetFormat: OutputFormat.BLOG_POST,
@@ -67,7 +67,7 @@ describe('ContentPipeline Integration', () => {
         tags: ['test'],
         additionalContext: { custom: 'value' }
       };
-      
+
       const result = await pipeline.process('# Test\n\n## Content\nContent', metadata);
       expect(result.metadata.tags).toEqual(['test']);
       expect(result.metadata.additionalContext).toHaveProperty('custom');
@@ -78,7 +78,7 @@ describe('ContentPipeline Integration', () => {
         contentType: ContentType.MARKDOWN,
         targetFormat: OutputFormat.BLOG_POST,
       });
-      
+
       expect(result.processingNotes).toContain('Standardized from markdown to markdown');
       expect(result.processingNotes?.some(note => note.includes('AI enhancement'))).toBe(true);
       expect(result.processingNotes?.some(note => note.includes('SEO'))).toBe(true);
@@ -96,7 +96,7 @@ describe('ContentPipeline Integration', () => {
         targetFormat: format,
       });
       expect(result.metadata.targetFormat).toBe(format);
-      expect(result.content).toBeDefined();
+      expect(result.content).toBeDefined(); // TODO: Add more specific content checks
     });
   });
 
